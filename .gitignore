@@ -1,0 +1,21 @@
+# Baked images live in ~/.tart and as local .tvm caches — never in git.
+*.tvm
+
+# Never commit signing material or keychains (the recipe GENERATES these
+# inside the VM; they must not leak into the repo).
+*.p12
+*.pem
+*.keychain
+*.keychain-db
+.signing-id
+
+# Compiled helpers (built inside the VM from the .swift source).
+helpers/click
+helpers/*.o
+
+# Screenshots / AX dumps captured during a verify run.
+artifacts/
+*.png
+
+# macOS / editor noise.
+.DS_Store

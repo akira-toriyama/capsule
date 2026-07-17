@@ -1,0 +1,16 @@
+# capsule profile: cast-rec (captures the "facet-test-rec" verify VM;
+# name implies recognition/recording). Placeholder until its exact
+# purpose is reconstructed — it is one of the three hand-made VMs this
+# repo exists to capture, so it gets a slot even before it's fleshed out.
+#
+# STATUS: WIP skeleton — purpose to be reconstructed.
+
+name  = "cast-rec"
+repos = []              # draft until confirmed (facet? wand cast recognition?)
+
+worktree     = ""
+branch       = "main"
+patched-deps = []
+fixture      = ""
+verify-tier  = "ax"     # recognition checks lean on AX / headless streams, not pixels
+driver       = ""

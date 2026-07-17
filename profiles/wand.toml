@@ -1,0 +1,33 @@
+# capsule profile: wand (captures the facet-test-26-lineage verify VM).
+# The recipe bakes the SHARED CORE; a profile declares the per-app
+# VARIABLE surface the verify loop needs.
+#
+# STATUS: WIP skeleton — driver not yet wired (bring-up gate).
+
+name  = "wand"
+repos = ["akira-toriyama/wand"]
+
+# wand's tome-delete work is an UNPUSHED branch, so the loop rsyncs the
+# working tree rather than cloning a clean ref. The env-proof uses main
+# with a minimal fixture; the real t-k4hf run switches the branch.
+worktree = "/Volumes/workspace/github.com/akira-toriyama/wand"
+branch   = "main"   # env-proof; "feat/t-k4hf-tome-context-menu-delete" for the real run
+
+# SwiftPM local-path dependency overrides. Empty for the main env-proof.
+# The real t-k4hf run needs a patched local sill (t-cp90, unreleased):
+#   patched-deps = ["sill=/Volumes/workspace/github.com/akira-toriyama/sill"]
+patched-deps = []
+
+fixture = "fixtures/wand-tome.toml"
+
+# Persistent signing cert so the baked AX grant survives rebuilds; the
+# loop drives the package.sh-SIGNED bundle, never `.build/debug/wand`.
+signing = "wand/setup-signing-cert.sh"
+build   = "swift build -c debug && ./package.sh"
+
+# AX-only is human-zero forever; screenshot adds a within-window bonus.
+verify-tier = "screenshot"
+
+# driver (TODO, gate): middle-click open tome -> right-click a row ->
+# Delete -> screenshot, to observe prune / dismiss / neon / line-pets.
+driver = "drivers/wand-tome-delete.sh"

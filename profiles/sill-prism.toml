@@ -1,0 +1,22 @@
+# capsule profile: sill/prism (captures the "sill-focusprobe" verify VM).
+# prism is a REGULAR (non-LSUIElement) app, so it exercises sill's
+# `hidesOnDeactivate = activationPolicy() != .accessory` branch and
+# proves the t-cp90 fix doesn't regress regular-app menus.
+#
+# STATUS: WIP skeleton — prism is not cloned locally yet.
+
+name  = "sill-prism"
+repos = ["akira-toriyama/prism", "akira-toriyama/sill"]
+
+# prism must be cloned (absent locally); it builds against a patched
+# local sill carrying the t-cp90 hidesOnDeactivate one-liner.
+worktree     = "/Volumes/workspace/github.com/akira-toriyama/prism"
+branch       = "main"
+patched-deps = ["sill=/Volumes/workspace/github.com/akira-toriyama/sill"]
+
+fixture = "fixtures/prism-menu.toml"   # TODO: theme='terminal', widget=ThemedMenu
+
+# Regular app → only AX + screenshot needed; no persistent cert / event
+# tap (that's wand-specific).
+verify-tier = "screenshot"
+driver      = "drivers/prism-render.sh"   # TODO (gate)

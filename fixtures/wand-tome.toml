@@ -1,0 +1,50 @@
+# capsule gate fixture — wand tome acceptance (projects/t-8ffm).
+#
+# A COMPLETE, self-contained wand config: [failsafe] is mandatory (wand
+# refuses to start without it), [tome] is enabled with the "neon" theme,
+# and the items exercise the t-k4hf delete acceptance:
+#   - root-level items (Alpha / Beta)      → delete all → panel DISMISS
+#   - a "Sort" folder with children        → delete all children → PRUNE
+# apps = ["*"] so items show regardless of the frontmost app, keeping the
+# VM gate target-independent and deterministic. Actions are harmless
+# `echo`s — the gate verifies the delete UI, not action side effects.
+#
+# STATUS: UNVERIFIED until the gate runs in a clone — see docs/design.md.
+
+[failsafe]
+mouse-hold-timeout-seconds = 30
+emergency-release-key = "esc"
+
+[tome]
+enabled = true
+theme = "neon"
+
+[[tome.cursor.item]]
+name = "Alpha"
+icon = "SF:a.circle"
+apps = ["*"]
+action-type = "shell"
+action-cmd = "echo alpha"
+
+[[tome.cursor.item]]
+name = "Beta"
+icon = "SF:b.circle"
+apps = ["*"]
+action-type = "shell"
+action-cmd = "echo beta"
+
+# Folder "Sort" with two children (group path = ["Sort"]). Deleting both
+# children must prune the now-empty folder row.
+[[tome.cursor.item]]
+name = "By Name"
+group = ["Sort"]
+apps = ["*"]
+action-type = "shell"
+action-cmd = "echo name"
+
+[[tome.cursor.item]]
+name = "By Date"
+group = ["Sort"]
+apps = ["*"]
+action-type = "shell"
+action-cmd = "echo date"
