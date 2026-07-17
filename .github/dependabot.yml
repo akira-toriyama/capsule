@@ -1,0 +1,37 @@
+# Canonical standard file managed by fleet-sync (.github/workflows/fleet-sync.yml).
+# Do NOT edit per-repo copies — edit THIS file; fleet-sync propagates it to every
+# owned, non-fork, non-archived repo. Synced to: .github/dependabot.yml
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # Wait 7 days after a release before proposing it — freshly published
+    # versions are where supply-chain compromises surface (xz, tj-actions).
+    cooldown:
+      default-days: 7
+    # Batch every action bump into ONE weekly PR (not one PR per action).
+    groups:
+      actions:
+        patterns: ["*"]
+    # gitmoji + Conventional Commits so bot PRs match the house convention
+    # (CONTRIBUTING.md). Bots are exempt from commit-lint, so this is decoration.
+    commit-message:
+      prefix: ":arrow_up: build(deps)"
+
+  # Go module updates. A no-op on repos without a go.mod (the Swift/other repos
+  # in the fleet), so it is safe fleet-wide, and it turns on dependency +
+  # security updates for the Go tools (pare, furrow). Batched into one weekly PR.
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    # Same 7-day supply-chain cooldown as github-actions above.
+    cooldown:
+      default-days: 7
+    groups:
+      gomod:
+        patterns: ["*"]
+    commit-message:
+      prefix: ":arrow_up: build(deps)"
