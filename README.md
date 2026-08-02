@@ -5,8 +5,6 @@
 ![license](https://img.shields.io/badge/license-MIT-blue)
 ![status](https://img.shields.io/badge/status-skeleton-orange)
 
-**English** · [日本語](README.ja.md)
-
 Reproducible, disposable **[Tart](https://tart.run)** macOS VMs for
 **headless GUI verification** of the akira-toriyama Swift app family
 (wand, sill, prism, facet, focusfx, …).
