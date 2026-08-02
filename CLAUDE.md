@@ -8,6 +8,10 @@
   README.ja.md は置かない（2026-08-02 に削除済み）。
 - **VM・イメージは使い捨て**: VM の破壊・削除はホストへの影響がほぼ無いので
   自由にやってよい。**破壊的変更も OK** — 互換レイヤーを残さず綺麗に壊す。
+- **許諾済み（2026-08-02 本人明言）**: 各 Swift app repo を VM に clone して
+  検証してよい。`ghcr.io/akira-toriyama/demo-base` への push もどんどん
+  やってよい。VM 関連の作業は確認待ちせず進める。
+  （認証の現況・経緯は projects/t-8ffm の body が正本。）
 - 目的: akira-toriyama Swift app family（wand, sill, prism, facet,
   focusfx, …）向けの headless GUI 検証環境（Tart VM）。設計判断と
   検証済み事実は [docs/design.md](docs/design.md) が正典。
