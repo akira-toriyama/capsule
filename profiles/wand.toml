@@ -2,8 +2,12 @@
 # loop. The recipe (packer/ + provision/) bakes the SHARED CORE; a
 # profile says which repo to build, what the guest needs, and which
 # driver drives it. `make verify PROFILE=wand`.
+#
+# Style: taplo's default (one space around `=`, comments on their own
+# line). The fleet's taplo CI enforces it — aligned `=` fails the check,
+# and an aligned block with trailing comments crashes the formatter.
 
-name  = "wand"
+name = "wand"
 repos = ["akira-toriyama/wand"]
 
 # The loop builds a DETACHED worktree of this repo at `branch` (under
@@ -12,11 +16,12 @@ repos = ["akira-toriyama/wand"]
 # verified — commit first. The t-k4hf run switches this to
 # "feat/t-k4hf-tome-context-menu-delete" (currently origin-only).
 worktree = "/Volumes/workspace/github.com/akira-toriyama/wand"
-branch   = "main"
+branch = "main"
 
 # SwiftPM local-path dependency overrides for unreleased dependencies.
 # Empty for the env-proof; the t-k4hf run needs a patched local sill
-# (t-cp90, unreleased):  ["sill=/Volumes/workspace/github.com/akira-toriyama/sill"]
+# (t-cp90, unreleased):
+#   ["sill=/Volumes/workspace/github.com/akira-toriyama/sill"]
 patched-deps = []
 
 # Host build. package.sh does its own `swift build -c release`, then
@@ -24,12 +29,12 @@ patched-deps = []
 # drives that bundle, never `.build/release/wand`, because an ad-hoc
 # re-sign drops the baked Accessibility grant.
 signing = "./setup-signing-cert.sh"
-build   = "./package.sh"
-app     = "Wand.app"
+build = "./package.sh"
+app = "Wand.app"
 
 # The fixture is config, not product: it lands in the guest HOME (the
 # shared bundle is read-only and wand reads one fixed path).
-fixture      = "fixtures/wand-tome.toml"
+fixture = "fixtures/wand-tome.toml"
 fixture-dest = ".config/wand/config.toml"
 
 # WAND_DEBUG makes the daemon log its event-tap lines, which is how the

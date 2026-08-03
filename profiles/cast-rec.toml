@@ -6,20 +6,24 @@
 #
 # STATUS: WIP skeleton — purpose to be reconstructed.
 
-name  = "cast-rec"
-repos = []              # draft until confirmed (facet? wand cast recognition?)
+name = "cast-rec"
 
-worktree     = ""
-branch       = "main"
+# draft until confirmed (facet? wand cast recognition?)
+repos = []
+
+worktree = ""
+branch = "main"
 patched-deps = []
 
 signing = ""
-build   = ""
-app     = ""
+build = ""
+app = ""
 
-fixture      = ""
+fixture = ""
 fixture-dest = ""
-launch-env   = []
+launch-env = []
 
-verify-tier  = "ax"     # recognition checks lean on AX / headless streams, not pixels
-driver       = ""
+# recognition checks lean on AX / headless streams, not pixels
+verify-tier = "ax"
+
+driver = ""

@@ -8,25 +8,30 @@
 # verify.sh, never yet run). Key names track profiles/wand.toml, which
 # is the worked example.
 
-name  = "sill-prism"
+name = "sill-prism"
 repos = ["akira-toriyama/prism", "akira-toriyama/sill"]
 
 # prism must be cloned (absent locally); it builds against a patched
 # local sill carrying the t-cp90 hidesOnDeactivate one-liner.
-worktree     = "/Volumes/workspace/github.com/akira-toriyama/prism"
-branch       = "main"
+worktree = "/Volumes/workspace/github.com/akira-toriyama/prism"
+branch = "main"
 patched-deps = ["sill=/Volumes/workspace/github.com/akira-toriyama/sill"]
 
 # Regular app → no persistent cert / event tap (those are wand's, for
-# the AX grant its CGEventTap needs); TODO: confirm prism's bundle name
-# and its packaging entry point once it is cloned.
+# the AX grant its CGEventTap needs).
+# TODO: confirm prism's bundle name and packaging entry point once it is
+# cloned.
 signing = ""
-build   = "./package.sh"
-app     = "Prism.app"
+build = "./package.sh"
+app = "Prism.app"
 
-fixture      = "fixtures/prism-menu.toml"   # TODO: theme='terminal', widget=ThemedMenu
-fixture-dest = ".config/prism/config.toml"  # TODO: confirm prism's config path
-launch-env   = []
+# TODO: fixture with theme='terminal' + a ThemedMenu widget; confirm
+# prism's config path.
+fixture = "fixtures/prism-menu.toml"
+fixture-dest = ".config/prism/config.toml"
+launch-env = []
 
 verify-tier = "screenshot"
-driver      = "drivers/prism-render.sh"     # TODO
+
+# TODO
+driver = "drivers/prism-render.sh"
