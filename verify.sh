@@ -95,14 +95,28 @@ if [ "${CAPSULE_NO_BUILD:-}" != "1" ]; then
   # Uncommitted work in $WORKTREE is deliberately NOT verified: the run
   # must be reproducible from a commit. Commit, then verify.
 
-  # SwiftPM local-path overrides for unreleased dependencies.
-  # NOTE: declared by profiles/sill-prism.toml but not yet exercised by
-  # a real run (wand's env-proof has none) — treat as unproven.
+  # SwiftPM local-path overrides for unreleased dependencies. `edit`
+  # state is STICKY — it lives in the build worktree, so a dependency
+  # would keep being overridden after the profile stopped asking for it,
+  # and the run would silently verify something the profile never
+  # declared. Clear every edited dependency first, then apply the list.
+  WS="$WORK/.build/workspace-state.json"
+  if [ -f "$WS" ]; then
+    while IFS= read -r stale; do
+      [ -n "$stale" ] || continue
+      say "clearing stale patched dep: $stale"
+      (cd "$WORK" && swift package unedit --force "$stale" >/dev/null 2>&1 || true)
+    done < <(jq -r '.object.dependencies[]? | select(.state.name == "edited")
+                    | .packageRef.name' "$WS" 2>/dev/null)
+  fi
   while IFS= read -r dep; do
     [ -n "$dep" ] || continue
-    (cd "$WORK" && swift package unedit --force "${dep%%=*}" >/dev/null 2>&1 || true)
-    say "patched dep: ${dep%%=*} -> ${dep#*=}"
-    (cd "$WORK" && swift package edit "${dep%%=*}" --path "${dep#*=}")
+    dep_path="${dep#*=}"
+    dep_path="${dep_path/#\~/$HOME}"   # profiles may write ~ for the home dir
+    [ -d "$dep_path" ] || {
+      echo "verify: patched-dep path does not exist: $dep_path" >&2; exit 3; }
+    say "patched dep: ${dep%%=*} -> $dep_path"
+    (cd "$WORK" && swift package edit "${dep%%=*}" --path "$dep_path")
   done < <(pfa '.["patched-deps"]')
 
   # The persistent self-signed cert: TCC keys the grant to the signing

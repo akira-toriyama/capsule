@@ -374,11 +374,32 @@ The cost is that **uncommitted work is not verified** — commit first.
   text, because peekaboo's schema is not a contract and the fixture's
   labels are.
 
+### `patched-deps` — proven, and it must point at a capsule-owned clone
+
+Exercised against wand with sill overridden, three legs (2026-08-03):
+the run passes and `.build/workspace-state.json` reports sill
+`state=edited` at the given path; breaking that tree fails the build
+with errors naming *that* path (so the override is genuinely what
+compiles); and a profile that declares no override clears the edit.
+
+That last leg was a bug this test found: **SwiftPM's `edit` state is
+sticky**. It lives in the build worktree, so once a profile had
+overridden a dependency, every later run kept using the local copy —
+the loop would have gone on verifying something no profile declared.
+The loop now clears every edited dependency before applying the
+profile's list.
+
+**Point `patched-deps` at a clone capsule owns, not at the app repo's
+live checkout.** The obvious `sill=/Volumes/workspace/.../sill` was
+tried and rejected: that tree belonged to another session, sitting on a
+probe branch at v6 with a dirty `Package.swift`, while wand pins v5 —
+i.e. it reintroduces exactly the cross-session coupling capsule exists
+to remove, and makes the build depend on someone's uncommitted state.
+Clone the ref you want into `~/.tart/capsule-deps/<name>` (detached at
+a commit) and point there; a `~` in the path is expanded.
+
 ### Still unproven
 
-- `patched-deps` (SwiftPM local-path overrides) is implemented but has
-  never run — wand's env-proof declares none. It is the first thing to
-  exercise for sill/prism `t-cp90`.
 - `profiles/sill-prism.toml` and `profiles/cast-rec.toml` remain
   skeletons: prism is not cloned locally and cast-rec's purpose is
   still unreconstructed.

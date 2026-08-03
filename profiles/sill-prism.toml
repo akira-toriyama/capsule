@@ -15,7 +15,13 @@ repos = ["akira-toriyama/prism", "akira-toriyama/sill"]
 # local sill carrying the t-cp90 hidesOnDeactivate one-liner.
 worktree = "/Volumes/workspace/github.com/akira-toriyama/prism"
 branch = "main"
-patched-deps = ["sill=/Volumes/workspace/github.com/akira-toriyama/sill"]
+
+# A clone capsule owns, detached at the commit under test — NOT the app
+# repo's live checkout, which belongs to whatever session has it open
+# (see docs/design.md §patched-deps). Populate before the first run:
+#   git clone --no-checkout /Volumes/workspace/github.com/akira-toriyama/sill \
+#     ~/.tart/capsule-deps/sill && git -C ~/.tart/capsule-deps/sill checkout --detach <rev>
+patched-deps = ["sill=~/.tart/capsule-deps/sill"]
 
 # Regular app → no persistent cert / event tap (those are wand's, for
 # the AX grant its CGEventTap needs).
