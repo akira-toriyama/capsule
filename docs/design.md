@@ -1,9 +1,12 @@
 # capsule — design & decision record
 
-Durable home for *why* capsule is shaped the way it is. Tracked as
-`projects/t-8ffm`. Every claim below was verified against a primary
-source (GitHub/cirruslabs docs, Tart CLI `--help`, Apple docs, or the
-local machine) during the 2026-07-18 investigation.
+Durable home for *why* capsule is shaped the way it is, and the live
+record of what has actually been measured. The bring-up task
+(`projects/t-8ffm`) closed on 2026-08-03 once `make bake` and
+`make verify` were both proven from the committed recipe; this file is
+the canon from there on. Every claim below was verified against a
+primary source (GitHub/cirruslabs docs, Tart CLI `--help`, Apple docs,
+or the local machine).
 
 ## Goal
 
@@ -398,8 +401,51 @@ to remove, and makes the build depend on someone's uncommitted state.
 Clone the ref you want into `~/.tart/capsule-deps/<name>` (detached at
 a commit) and point there; a `~` in the path is expanded.
 
+### Reproducibility — the recipe was re-run from scratch (2026-08-03)
+
+The central claim of this repo ("recipe is the source, the image is a
+disposable cache") had never been exercised: every green run so far had
+used the *first* baked image, and `packer build -force` — the path that
+destroys the image it is replacing — had never run against an existing
+image of the same name. Both were closed in one pass:
+
+    tart clone capsule-base capsule-base-prev    # CoW fallback, ~0 disk
+    make bake                                    # EXIT=0, packer 46 s
+    make verify PROFILE=wand                     # EXIT=0
+
+`-force` replaced `capsule-base` cleanly, `provision/30-consent-core.sh`
+granted Accessibility + Screen Recording unattended over VNC, and the
+fresh clone of the *rebuilt* base passed the whole wand loop — tome
+panel open, AX listing Alpha / Beta / Sort, a 1.2 MB composited
+screenshot. So a lost image now costs ~4 minutes, not a re-derivation.
+
+Two method notes worth keeping:
+
+- **A VM directory's `birthtime` does NOT survive as evidence of a
+  re-bake.** `~/.tart/vms/capsule-base` still reports
+  `birth=2026-08-03T11:04:46+0900` *after* a full `packer build -force`
+  replaced it. Any "this image predates commit X" inference built on
+  `stat -f %SB` is invalid; read the recipe's effect in the guest
+  instead.
+- This run also demonstrated the cross-session isolation capsule exists
+  for, unplanned: the wand checkout was sitting on a `doc-consistency`
+  branch belonging to another session, and the loop still built and
+  verified `main` (bebd902) from its own detached worktree.
+
 ### Still unproven
 
+- `make export` / `make import` have never been run. That `.tvm` round
+  trip is the *only* sanctioned distribution path (there is deliberately
+  no registry push), so the fallback for "move this image to another
+  machine" is untested — including whether the baked TCC grants survive
+  the round trip.
+- The recipe does not pin peekaboo: `bake.sh` ships whatever version the
+  host happens to have (3.9.4 at the time of writing) and records it
+  nowhere, so "rebuild from the committed recipe" is reproducible today
+  but not across time or machines. `helpers/UPSTREAM.md` planned this
+  pin and never did it.
 - `profiles/sill-prism.toml` and `profiles/cast-rec.toml` remain
-  skeletons: prism is not cloned locally and cast-rec's purpose is
-  still unreconstructed.
+  skeletons. sill-prism's premise also needs re-checking: prism appears
+  to be a target *inside* sill rather than its own repo, which would
+  make the profile's `worktree`/`patched-deps` shape wrong, not just
+  unfilled.

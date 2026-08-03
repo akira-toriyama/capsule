@@ -3,7 +3,7 @@
 ![platform](https://img.shields.io/badge/platform-macOS%2026%2B-lightgrey)
 ![tool](https://img.shields.io/badge/Tart-2.30%2B-blue)
 ![license](https://img.shields.io/badge/license-MIT-blue)
-![status](https://img.shields.io/badge/status-skeleton-orange)
+![status](https://img.shields.io/badge/status-working-brightgreen)
 
 Reproducible, disposable **[Tart](https://tart.run)** macOS VMs for
 **headless GUI verification** of the akira-toriyama Swift app family
@@ -75,7 +75,9 @@ toggle; System Settings relaunches in every clone) are recorded in
 [docs/design.md](docs/design.md) §Verify loop.
 
 Next up: wand `t-k4hf`'s remaining acceptance items and sill/prism
-`t-cp90` — the first real users. Tracked as `projects/t-8ffm`.
+`t-cp90` — the first real users. The bring-up task (`projects/t-8ffm`)
+closed once both commands were proven; [docs/design.md](docs/design.md)
+is the live record from here on.
 
 ## Layout
 

@@ -11,7 +11,11 @@
 - **許諾済み（2026-08-02 本人明言）**: 各 Swift app repo を VM に clone して
   検証してよい。`ghcr.io/akira-toriyama/demo-base` への push もどんどん
   やってよい。VM 関連の作業は確認待ちせず進める。
-  （認証の現況・経緯は projects/t-8ffm の body が正本。）
+  ただし **push 許諾は行使していない** — レイヤ再利用が無い
+  （cirruslabs/tart#771）ため registry push は設計として採らず、配布は
+  `make export` の `.tvm`（[docs/design.md](docs/design.md) §Image vs recipe
+  と Makefile の `push` target 不在が正本）。許諾は将来 registry が必要に
+  なったときのために残してある。
 - 目的: akira-toriyama Swift app family（wand, sill, prism, facet,
   focusfx, …）向けの headless GUI 検証環境（Tart VM）。設計判断と
   検証済み事実は [docs/design.md](docs/design.md) が正典。

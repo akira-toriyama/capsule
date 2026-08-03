@@ -1,4 +1,4 @@
-# capsule gate fixture — wand tome acceptance (projects/t-8ffm).
+# capsule gate fixture — wand tome acceptance.
 #
 # A COMPLETE, self-contained wand config: [failsafe] is mandatory (wand
 # refuses to start without it), [tome] is enabled with the "neon" theme,
@@ -9,7 +9,10 @@
 # VM gate target-independent and deterministic. Actions are harmless
 # `echo`s — the gate verifies the delete UI, not action side effects.
 #
-# STATUS: UNVERIFIED until the gate runs in a clone — see docs/design.md.
+# STATUS: VERIFIED — `make verify PROFILE=wand` drives this fixture in a
+# fresh clone and asserts Alpha / Beta / Sort in the AX tree (2026-08-03,
+# reproduced against a base baked from the committed recipe). The delete
+# acceptance the items were designed for (t-k4hf) still needs a driver.
 
 [failsafe]
 mouse-hold-timeout-seconds = 30
