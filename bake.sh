@@ -58,7 +58,10 @@ echo "bake: compiled helpers/click.swift -> .build/capsule-click"
 echo "bake: baking $OUT from $BASE (headless — no host windows)"
 tart pull "$BASE"
 packer init packer/base.pkr.hcl
-packer build \
+# -force: a recipe that cannot be re-run is not a recipe. The previous
+# image of the same name is replaced (VMs are disposable by policy);
+# clone it first if you want a fallback while re-baking.
+packer build -force \
   -var "vm_base_name=${BASE}" \
   -var "vm_name=${OUT}" \
   -var "ssh_pubkey=${PUBKEY}" \

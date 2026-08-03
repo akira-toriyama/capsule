@@ -19,9 +19,13 @@ export TART_NO_AUTO_PRUNE = 1
 help:
 	@echo "capsule targets:"
 	@echo "  make bake                 # RARE/LOCAL: build the baked image from the recipe"
-	@echo "  make verify PROFILE=wand  # DAILY: clone -> run --dir:ro -> drive -> delete"
+	@echo "  make verify PROFILE=wand  # DAILY: build -> clone -> :ro share -> drive -> delete"
 	@echo "  make export / make import # move the image registry-free via a .tvm file"
 	@echo "  (no 'push' target by design — see docs/design.md, tart#771)"
+	@echo ""
+	@echo "verify env:"
+	@echo "  CAPSULE_KEEP=1     keep the clone running for post-mortem SSH"
+	@echo "  CAPSULE_NO_BUILD=1 reuse the last host build (fast driver iteration)"
 
 bake:            ## rare, local: recipe -> baked image (needs packer + one-time TCC consent)
 	./bake.sh "$(BASE)" "$(IMAGE)"

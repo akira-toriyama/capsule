@@ -33,11 +33,14 @@ KEY="${2:?usage: 30-consent-core.sh <image-name> <ssh-private-key>}"
 
 export TART_NO_AUTO_PRUNE=1
 
+# vncdotool lives in its own venv by default (it is a pip-only tool and
+# has no business on the host PATH); CAPSULE_VNCDO overrides.
 VNCDO="${CAPSULE_VNCDO:-$(command -v vncdo || true)}"
-[ -n "$VNCDO" ] || {
+[ -n "$VNCDO" ] || VNCDO="$HOME/.tart/capsule-venv/bin/vncdo"
+[ -x "$VNCDO" ] || {
   echo "consent: vncdotool not found — python3 -m venv ~/.tart/capsule-venv &&" >&2
-  echo "         ~/.tart/capsule-venv/bin/pip install vncdotool, then" >&2
-  echo "         export CAPSULE_VNCDO=~/.tart/capsule-venv/bin/vncdo" >&2
+  echo "         ~/.tart/capsule-venv/bin/pip install vncdotool pillow" >&2
+  echo "         (or export CAPSULE_VNCDO=/path/to/vncdo)" >&2
   exit 3
 }
 
@@ -81,9 +84,21 @@ vncslow() { "$VNCDO" --delay 120 -s "127.0.0.1::${VNC_PORT}" -p "$VNC_PASS" "$@"
 # Measure the framebuffer scale (1x or 2x of the 1024x768 point space) —
 # clicking with the wrong scale lands on the wallpaper and hides every
 # window (Tahoe's click-wallpaper-to-show-desktop trap).
+# The width is not stable from the first frame: an early-boot capture
+# can report 1280px and only settle to the pinned geometry seconds later
+# (observed 2026-08-03), so probe until it settles rather than aborting
+# on the first sample. A width that NEVER settles is the real
+# display-refit drift and must still abort — every click below would
+# land at the wrong scale.
 SCALE_PROBE="$(mktemp -t capsule-scale).png"
-vncc capture "$SCALE_PROBE"
-FB_W="$(sips -g pixelWidth "$SCALE_PROBE" 2>/dev/null | awk '/pixelWidth/{print $2}')"
+FB_W=""
+for _ in $(seq 1 20); do
+  vncc capture "$SCALE_PROBE" || true
+  FB_W="$(sips -g pixelWidth "$SCALE_PROBE" 2>/dev/null | awk '/pixelWidth/{print $2}')"
+  [ -n "$FB_W" ] && [ $(( FB_W % 1024 )) -eq 0 ] && break
+  echo "consent: framebuffer ${FB_W:-?}px — waiting for the pinned 1024x768 geometry"
+  sleep 3
+done
 rm -f "$SCALE_PROBE"
 [ -n "$FB_W" ] || { echo "consent: could not measure VNC framebuffer" >&2; exit 1; }
 if [ $(( FB_W % 1024 )) -ne 0 ]; then
@@ -118,6 +133,16 @@ PY
 }
 ANCHOR_X=600; ANCHOR_Y=100   # pane background — white iff Settings is frontmost
 ROW_X=414;    ROW_Y=167      # first row's app icon — dark once the list renders
+
+# Step A's AX request raises an "Accessibility Access" alert, and that
+# alert sits exactly ON the row area (x 283..741, y 155..333) — so the
+# row probe reads alert chrome, never the row icon, and the run stalls
+# until it gives up (observed 2026-08-03). Its "Open System Settings"
+# button dismisses the alert AND re-fronts the pane we want; when no
+# alert is up the same point is empty pane, so the click is harmless.
+# Only ever call this once the pane is known frontmost — a blind click
+# could land on the wallpaper, which on Tahoe hides every window.
+ALERT_OK_X=576; ALERT_OK_Y=304
 
 is_light() { [ "$(( ${1%%,*} ))" -gt 200 ]; }
 is_dark()  { [ "$(( ${1%%,*} ))" -lt 120 ]; }
@@ -165,6 +190,9 @@ if ! granted "Accessibility"; then
   sshvm 'pkill -x Terminal 2>/dev/null || true'
   sshvm 'open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"'
   for attempt in 1 2 3; do
+    wait_front || { sleep 3; continue; }
+    click_at $ALERT_OK_X $ALERT_OK_Y   # dismiss the AX alert if it is up
+    sleep 2
     wait_row || { sleep 3; continue; }
     click_at 823 168             # row 1 toggle (sshd-keygen-wrapper is the only row)
     sleep 2
@@ -207,7 +235,23 @@ fi
 echo "consent: Screen Recording granted (ssh context)"
 
 # --- D. verify, tidy, snapshot -------------------------------------
-sshvm 'osascript -e "quit app \"System Settings\"" 2>/dev/null || true'
+# Leave the lab in a KNOWN state: every clone of this image must boot to
+# a bare desktop. Two separate mechanisms put System Settings back on
+# screen otherwise (both observed 2026-08-03):
+#   - `osascript -e 'quit app …'` from an SSH session needs its own
+#     Automation grant, so the quit silently no-opped;
+#   - even once killed, macOS resumes its windows from Saved Application
+#     State at the next login.
+# Match the whole bundle, not the app process: `pkill -x "System
+# Settings"` leaves `systemsettingsagent` alive, which relaunches the
+# app within seconds — so it was still running at shutdown and launchd
+# reopened it in every clone (diagnosed 2026-08-03: ppid 1, and it stays
+# dead once the agent goes too).
+sshvm 'pkill -f "System Settings.app/Contents" 2>/dev/null || true'
+sleep 3
+# The whole directory, not a glob: the guest shell is zsh, which aborts
+# the command on an unmatched glob instead of expanding to nothing.
+sshvm 'rm -rf ~/Library/"Saved Application State" 2>/dev/null || true'
 sshvm "$pb image --mode screen --path /tmp/consent-proof.png >/dev/null 2>&1" \
   || { echo "consent: post-grant screenshot failed" >&2; exit 1; }
 sshvm 'rm -f /tmp/consent-proof.png; sudo shutdown -h now' 2>/dev/null || true

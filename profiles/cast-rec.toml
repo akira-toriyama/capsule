@@ -1,7 +1,8 @@
-# capsule profile: cast-rec (captures the "facet-test-rec" verify VM;
-# name implies recognition/recording). Placeholder until its exact
-# purpose is reconstructed — it is one of the three hand-made VMs this
-# repo exists to capture, so it gets a slot even before it's fleshed out.
+# capsule profile: cast-rec — placeholder for the "facet-test-rec"
+# lineage (the name implies recognition/recording). One of the hand-made
+# VMs this repo exists to capture, kept as a slot until its purpose is
+# reconstructed. It names no driver, so `make verify PROFILE=cast-rec`
+# refuses up front rather than pretending to run.
 #
 # STATUS: WIP skeleton — purpose to be reconstructed.
 
@@ -11,6 +12,14 @@ repos = []              # draft until confirmed (facet? wand cast recognition?)
 worktree     = ""
 branch       = "main"
 patched-deps = []
+
+signing = ""
+build   = ""
+app     = ""
+
 fixture      = ""
+fixture-dest = ""
+launch-env   = []
+
 verify-tier  = "ax"     # recognition checks lean on AX / headless streams, not pixels
 driver       = ""

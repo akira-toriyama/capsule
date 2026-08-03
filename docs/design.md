@@ -290,3 +290,95 @@ left as tribal knowledge):
    near-white whether on or off, so it cannot be its own probe —
    readiness must be read from the icon, and success from
    `peekaboo permissions status`, never from the pixels.
+
+## Verify loop — `make verify` closes the circle (2026-08-03)
+
+`verify.sh` is no longer a skeleton: `make verify PROFILE=wand` builds
+wand on the host, clones the baked base, drives the tome panel headless
+in the clone, asserts the fixture rows in the AX tree, captures the
+pixels, and destroys the clone. Observed end-to-end, repeatedly, on a
+base baked the same day by `make bake`.
+
+### Shape
+
+| stage | where | what |
+|---|---|---|
+| profile | host | `profiles/<x>.toml` = the per-app variable surface (`yq -p toml`) |
+| build | host | detached git worktree → persistent cert → signed `.app` |
+| stage | host | `~/.tart/capsule-stage/<x>/` — the only thing the guest sees |
+| clone | host | `tart clone` + `--display 1024x768 --no-display-refit` |
+| reset | guest | assert user activity, quit the leftover consent UI |
+| drive | host | `drivers/<x>.sh` defines `drive()`, uses the loop's helpers |
+| assert | host | AX tier gates; pixels are a bonus artifact |
+
+The **driver runs on the host** and reaches into the guest through
+`vm` / `pb` / `click` / `ax_dump` / `snap`. That keeps the guest
+toolchain-free (JSON is parsed here) and keeps a driver readable as a
+sequence of intentions rather than SSH quoting.
+
+**Build in a detached worktree, not in the app's checkout.** The loop
+does `git worktree add --detach ~/.tart/capsule-work/<x>` and builds
+there, so it can pin any local ref — including an unpushed branch,
+since worktrees share the object store — without checking anything out
+in the tree a human or another session has open. That was one of the
+original reasons for capsule (a parallel session's `main` checkout
+silently swapped the binary under a running acceptance test), and it
+would have been reintroduced by a `git checkout` in the shared tree.
+The cost is that **uncommitted work is not verified** — commit first.
+
+### Verified this run (each one changed the code)
+
+- **A host-signed app inherits the ssh-context AX grant.** `capsule-base`
+  carries grants for `sshd-keygen-wrapper` only — nothing ever granted
+  `Wand.app` anything in this image — yet the event tap installed and
+  the middle-click opened the tome. So the gate's per-app grant was not
+  load-bearing, and **no per-app TCC bake is needed**: launch the signed
+  bundle as a direct child of the SSH session. It must *not* go through
+  `open`, which re-parents it to launchd and drops that responsibility.
+- **AX answers ~25 s before the screen composites.** In a fresh clone
+  SSH is up at t+10 s with Dock, Finder, menu-bar AX and window lists
+  all live — while `peekaboo image` still returns the 22 KB **boot
+  splash**. An idle framebuffer keeps serving it; `caffeinate -u` is
+  what moves it (t+19 s → t+25 s in the probe). The loop therefore
+  asserts user activity for the whole run, the recipe disables display
+  sleep, and `snap` retries until the frame is a composited one
+  (~150 KB without wallpaper, ~670 KB with; splash ~22 KB at 1024×768).
+  A run that never composites loses a bonus artifact, never a PASS.
+- **The VNC framebuffer width is not stable early in boot.** A capture
+  taken right after `tart run` reported 1280 px on a VM pinned to
+  1024×768, settling seconds later; the same base has been observed
+  serving both 1× (1024) and 2× (2048). The consent script now *probes
+  until it settles* and only aborts if it never does — an abort on the
+  first sample turned a boot race into a failed bake.
+- **The consent flow's own alert blocks the consent flow.** Registering
+  `sshd-keygen-wrapper` raises the "…would like to control this
+  computer" alert, and it lands exactly on the row area (x 283–741,
+  y 155–333), so the row probe reads alert chrome forever. Its "Open
+  System Settings" button dismisses it *and* re-fronts the pane; the
+  same point is empty pane when no alert is up, so clicking it
+  unconditionally (once the pane is frontmost) is safe.
+- **System Settings comes back in every clone, and the bake cannot stop
+  it.** `pkill -x "System Settings"` leaves `systemsettingsagent`, which
+  relaunches the app within seconds — so it was running at shutdown.
+  Killing the whole bundle (`pkill -f "System Settings.app/Contents"`)
+  makes it stay dead *within a boot*, but a fresh clone still logs in
+  with it running under ppid 1, with no `TALAppsToRelaunchAtLogin` and
+  no Saved Application State to clear. Mechanism unidentified; the loop
+  therefore **resets the lab at run start** instead of trusting the
+  image. Without it the frontmost app is a variable no profile declared
+  (wand's tome header renders it).
+- **`peekaboo inspect-ui --json` escapes the element listing.** The
+  human-readable dump lives in `.data.text` as an escaped string, so
+  grepping the JSON for a label silently never matches. `ax_dump`
+  writes both the JSON and the extracted text; drivers assert on the
+  text, because peekaboo's schema is not a contract and the fixture's
+  labels are.
+
+### Still unproven
+
+- `patched-deps` (SwiftPM local-path overrides) is implemented but has
+  never run — wand's env-proof declares none. It is the first thing to
+  exercise for sill/prism `t-cp90`.
+- `profiles/sill-prism.toml` and `profiles/cast-rec.toml` remain
+  skeletons: prism is not cloned locally and cast-rec's purpose is
+  still unreconstructed.

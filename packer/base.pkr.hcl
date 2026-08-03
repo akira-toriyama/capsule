@@ -96,7 +96,15 @@ build {
       "defaults write -g NSQuitAlwaysKeepsWindows -bool false",
       "defaults write com.apple.loginwindow TALLogoutSavesState -bool false",
       "defaults write com.apple.Terminal NSQuitAlwaysKeepsWindows -bool false",
+      "defaults write com.apple.systempreferences NSQuitAlwaysKeepsWindows -bool false",
     ]
+  }
+
+  # A verification lab must never idle: a slept display serves the boot
+  # splash to `peekaboo image` while the session behind it is fully live
+  # (measured 2026-08-03 — AX answered at t+10s, pixels at t+35s).
+  provisioner "shell" {
+    inline = ["sudo pmset -a displaysleep 0 disksleep 0 sleep 0"]
   }
 
   provisioner "shell" {

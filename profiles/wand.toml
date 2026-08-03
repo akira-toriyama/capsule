@@ -1,33 +1,43 @@
-# capsule profile: wand (captures the facet-test-26-lineage verify VM).
-# The recipe bakes the SHARED CORE; a profile declares the per-app
-# VARIABLE surface the verify loop needs.
-#
-# STATUS: WIP skeleton — driver not yet wired (bring-up gate).
+# capsule profile: wand — the per-app VARIABLE surface of the verify
+# loop. The recipe (packer/ + provision/) bakes the SHARED CORE; a
+# profile says which repo to build, what the guest needs, and which
+# driver drives it. `make verify PROFILE=wand`.
 
 name  = "wand"
 repos = ["akira-toriyama/wand"]
 
-# wand's tome-delete work is an UNPUSHED branch, so the loop rsyncs the
-# working tree rather than cloning a clean ref. The env-proof uses main
-# with a minimal fixture; the real t-k4hf run switches the branch.
+# The loop builds a DETACHED worktree of this repo at `branch` (under
+# ~/.tart/capsule-work/wand), so it never checks out a branch in the
+# tree a human or another session has open. Uncommitted work is not
+# verified — commit first. The t-k4hf run switches this to
+# "feat/t-k4hf-tome-context-menu-delete" (currently origin-only).
 worktree = "/Volumes/workspace/github.com/akira-toriyama/wand"
-branch   = "main"   # env-proof; "feat/t-k4hf-tome-context-menu-delete" for the real run
+branch   = "main"
 
-# SwiftPM local-path dependency overrides. Empty for the main env-proof.
-# The real t-k4hf run needs a patched local sill (t-cp90, unreleased):
-#   patched-deps = ["sill=/Volumes/workspace/github.com/akira-toriyama/sill"]
+# SwiftPM local-path dependency overrides for unreleased dependencies.
+# Empty for the env-proof; the t-k4hf run needs a patched local sill
+# (t-cp90, unreleased):  ["sill=/Volumes/workspace/github.com/akira-toriyama/sill"]
 patched-deps = []
 
-fixture = "fixtures/wand-tome.toml"
+# Host build. package.sh does its own `swift build -c release`, then
+# assembles and signs the bundle with the PERSISTENT cert — the harness
+# drives that bundle, never `.build/release/wand`, because an ad-hoc
+# re-sign drops the baked Accessibility grant.
+signing = "./setup-signing-cert.sh"
+build   = "./package.sh"
+app     = "Wand.app"
 
-# Persistent signing cert so the baked AX grant survives rebuilds; the
-# loop drives the package.sh-SIGNED bundle, never `.build/debug/wand`.
-signing = "wand/setup-signing-cert.sh"
-build   = "swift build -c debug && ./package.sh"
+# The fixture is config, not product: it lands in the guest HOME (the
+# shared bundle is read-only and wand reads one fixed path).
+fixture      = "fixtures/wand-tome.toml"
+fixture-dest = ".config/wand/config.toml"
 
-# AX-only is human-zero forever; screenshot adds a within-window bonus.
+# WAND_DEBUG makes the daemon log its event-tap lines, which is how the
+# driver asserts the tap actually opened.
+launch-env = ["WAND_DEBUG=1"]
+
+# AX-only is human-zero forever; the screenshot adds a within-window
+# bonus (Screen Recording re-confirms ~monthly on Tahoe).
 verify-tier = "screenshot"
 
-# driver (TODO, gate): middle-click open tome -> right-click a row ->
-# Delete -> screenshot, to observe prune / dismiss / neon / line-pets.
-driver = "drivers/wand-tome-delete.sh"
+driver = "drivers/wand-tome.sh"

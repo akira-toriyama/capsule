@@ -52,39 +52,47 @@ This is the family north star applied to VMs: a pushed image is a
 
 ## Status
 
-✅ **Gate PASSED and `make bake` is zero-touch (2026-08-03).**
+✅ **Both commands work end to end (2026-08-03).**
 
-- **The verify slice runs headless.** In an ephemeral clone, with zero
-  consent prompts and zero host disruption: a signed `Wand.app`
-  launched from a read-only share, `helpers/click` middle-click opened
-  the tome panel on a `--no-graphics` WindowServer, `peekaboo
-  inspect-ui` enumerated the fixture rows, `image --mode screen`
-  captured real pixels.
-- **`make bake` builds a consented base in one command** — packer
-  build (~40 s) → scripted TCC consent over VNC → stopped
-  `capsule-base`. Verified by cloning it: AX + Screen Recording granted,
-  peekaboo and the click helper present, screenshot working.
+```
+make bake                 # rare:  vanilla -> consented capsule-base, zero touches
+make verify PROFILE=wand  # daily: host build -> clone -> drive -> assert -> destroy
+```
 
-Evidence and the facts behind every choice (VNC-scripted consent,
-`sshd-keygen-wrapper` as the ssh-context TCC key, `see`'s `layer != 0`
-panel limitation, the display-refit trap):
-[docs/design.md](docs/design.md) §Gate result / §Bake result.
+`make verify PROFILE=wand` builds wand from a detached worktree, signs
+it with the persistent cert, clones the baked base, launches the bundle
+from a read-only share in a `--no-graphics` VM, middle-clicks the tome
+open with `helpers/click`, asserts the fixture rows in the AX tree,
+captures the pixels, and destroys the clone — no consent prompts, no
+host windows, nothing typed by hand.
 
-Next up: wire `verify.sh` (the daily loop is still a WIP skeleton) and
-use it for wand `t-k4hf` / sill `t-cp90`. Tracked as `projects/t-8ffm`.
+The load-bearing surprise: **the app inherits the ssh-context
+Accessibility grant**, so there is no per-app TCC bake — as long as the
+signed bundle is launched as a child of the SSH session and never via
+`open`. That and every other measured fact (AX answers ~25 s before the
+screen composites; the consent alert covers the row it is trying to
+toggle; System Settings relaunches in every clone) are recorded in
+[docs/design.md](docs/design.md) §Verify loop.
+
+Next up: wand `t-k4hf`'s remaining acceptance items and sill/prism
+`t-cp90` — the first real users. Tracked as `projects/t-8ffm`.
 
 ## Layout
 
 | path | what |
 |---|---|
-| `packer/base.pkr.hcl` | DRAFT recipe that bakes the shared core into an image |
-| `provision/` | provision steps (CLT, 1024×768 display, TCC bake-by-consent, signing cert) |
+| `packer/base.pkr.hcl` | recipe that bakes the shared core into an image |
+| `provision/` | provision steps (1024×768 display, TCC bake-by-consent, signing cert, optional CLT) |
 | `helpers/click.swift` | middle-click via CGEvent — peekaboo has no middle button |
-| `profiles/` | the 3 existing hand-made VMs captured as per-app manifests |
+| `profiles/` | per-app manifests: what to build, what the guest needs, which driver |
+| `drivers/` | per-app drive+assert scripts; each defines `drive()` |
 | `fixtures/` | config fixtures for acceptance runs |
 | `verify.sh` · `bake.sh` · `Makefile` | the loop + the rare local bake |
 
 ## Requirements
 
-`tart` 2.30+ on an Apple-silicon Mac (macOS 15+ host), `peekaboo`
-(screenshot + AX), and `brew install packer` before the first bake.
+Host: `tart` 2.30+ on an Apple-silicon Mac (macOS 15+), `peekaboo`
+(screenshot + AX), `yq` + `jq` (profiles and peekaboo JSON are parsed
+host-side so the guest stays toolchain-free). Baking additionally needs
+`packer` and `vncdotool` + `pillow` in a venv at `~/.tart/capsule-venv`
+(override with `CAPSULE_VNCDO`).

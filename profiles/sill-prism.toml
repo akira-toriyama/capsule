@@ -1,9 +1,12 @@
-# capsule profile: sill/prism (captures the "sill-focusprobe" verify VM).
-# prism is a REGULAR (non-LSUIElement) app, so it exercises sill's
-# `hidesOnDeactivate = activationPolicy() != .accessory` branch and
-# proves the t-cp90 fix doesn't regress regular-app menus.
+# capsule profile: sill/prism. prism is a REGULAR (non-LSUIElement) app,
+# so it exercises sill's `hidesOnDeactivate = activationPolicy() !=
+# .accessory` branch and proves the t-cp90 fix doesn't regress
+# regular-app menus.
 #
-# STATUS: WIP skeleton — prism is not cloned locally yet.
+# STATUS: WIP skeleton — prism is not cloned locally, and this is the
+# profile that will first exercise `patched-deps` (implemented in
+# verify.sh, never yet run). Key names track profiles/wand.toml, which
+# is the worked example.
 
 name  = "sill-prism"
 repos = ["akira-toriyama/prism", "akira-toriyama/sill"]
@@ -14,9 +17,16 @@ worktree     = "/Volumes/workspace/github.com/akira-toriyama/prism"
 branch       = "main"
 patched-deps = ["sill=/Volumes/workspace/github.com/akira-toriyama/sill"]
 
-fixture = "fixtures/prism-menu.toml"   # TODO: theme='terminal', widget=ThemedMenu
+# Regular app → no persistent cert / event tap (those are wand's, for
+# the AX grant its CGEventTap needs); TODO: confirm prism's bundle name
+# and its packaging entry point once it is cloned.
+signing = ""
+build   = "./package.sh"
+app     = "Prism.app"
 
-# Regular app → only AX + screenshot needed; no persistent cert / event
-# tap (that's wand-specific).
+fixture      = "fixtures/prism-menu.toml"   # TODO: theme='terminal', widget=ThemedMenu
+fixture-dest = ".config/prism/config.toml"  # TODO: confirm prism's config path
+launch-env   = []
+
 verify-tier = "screenshot"
-driver      = "drivers/prism-render.sh"   # TODO (gate)
+driver      = "drivers/prism-render.sh"     # TODO
