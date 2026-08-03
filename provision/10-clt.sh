@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# provision/10 — toolchain. First-users need only `swift build` (CLT);
-# tests are CI-covered, so Xcode is a per-app OPTIONAL, not core.
-#
-# STATUS: WIP skeleton — not yet run inside a bake.
+# provision/10 — toolchain. NOT part of the core bake: the 2026-08-03
+# gate proved the verify loop needs no guest toolchain (apps build on
+# the host and arrive over a read-only share; JSON parsing happens on
+# the host — invoking python3/swift in a toolchain-free guest pops the
+# CLT install dialog). Run this only for a per-app profile that truly
+# needs in-VM `swift build`/`swift test`.
 set -euo pipefail
 
 # CommandLineTools is enough for `swift build`. Pin it so a reboot can't

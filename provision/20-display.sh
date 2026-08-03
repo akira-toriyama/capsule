@@ -5,11 +5,11 @@
 # (a window opened at x=3376 on a second display; peekaboo couldn't find
 # it; osascript activate flew the Space).
 #
-# STATUS: WIP skeleton — not yet run inside a bake.
+# Tart sets the guest resolution at run time (1024×768 is the default),
+# so this is a guard/record only. The consent script and the verify
+# drivers assume the 2048×1536 VNC framebuffer (1024×768 @2x) — if this
+# ever prints something else, their coordinates are invalid.
 set -euo pipefail
 
-# Tart sets the guest resolution at run time (`tart run
-# --display=1024x768` / the default), so this is mostly a guard/record.
-# All three hand-made VMs already standardized on 1024×768.
 echo "capsule: expecting a single 1024x768 display for deterministic coords"
-peekaboo list screens --json 2>/dev/null || true
+system_profiler SPDisplaysDataType 2>/dev/null | grep -E "Resolution|Main Display" || true

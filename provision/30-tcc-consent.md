@@ -12,6 +12,11 @@ baked by **consenting once inside the VM** — and that consent click is
 windows, zero human touches. All in-VM consent is pre-authorized (the
 host is the opposite — always ask).
 
+**The core grants are automated**: `bake.sh` runs
+[`30-consent-core.sh`](30-consent-core.sh) (ssh-context AX + Screen
+Recording via `sshd-keygen-wrapper`, state-verified after every click).
+The steps below document the mechanism and the per-app variant.
+
 ## Do this once, on the base VM, BEFORE snapshotting
 
 1. Boot the base headless with VNC: `tart run <base> --no-graphics

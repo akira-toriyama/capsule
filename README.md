@@ -52,21 +52,26 @@ This is the family north star applied to VMs: a pushed image is a
 
 ## Status
 
-✅ **Gate PASSED (2026-08-03).** The headless vertical slice ran
-end-to-end in an ephemeral clone with zero consent prompts and zero
-host disruption: signed `Wand.app` launched from a read-only share,
-`helpers/click` middle-click opened the tome panel on a `--no-graphics`
-WindowServer, `peekaboo inspect-ui` enumerated the fixture rows, and
-`image --mode screen` captured real pixels. Full evidence + newly
-verified facts (VNC-scripted consent, `sshd-keygen-wrapper` as the
-ssh-context TCC key, `see`'s `layer != 0` panel limitation):
-[docs/design.md](docs/design.md) §Gate result.
+✅ **Gate PASSED and `make bake` is zero-touch (2026-08-03).**
 
-The consented local base is `capsule-gate-base` (rebuilt from the
-cached `macos-tahoe-vanilla` — the three hand-made VMs are gone). Next
-up: encode the proven manual steps into the Packer bake
-(`packer/base.pkr.hcl` + `provision/*.sh`, still DRAFT/WIP). Tracked
-as `projects/t-8ffm`.
+- **The verify slice runs headless.** In an ephemeral clone, with zero
+  consent prompts and zero host disruption: a signed `Wand.app`
+  launched from a read-only share, `helpers/click` middle-click opened
+  the tome panel on a `--no-graphics` WindowServer, `peekaboo
+  inspect-ui` enumerated the fixture rows, `image --mode screen`
+  captured real pixels.
+- **`make bake` builds a consented base in one command** — packer
+  build (~40 s) → scripted TCC consent over VNC → stopped
+  `capsule-base`. Verified by cloning it: AX + Screen Recording granted,
+  peekaboo and the click helper present, screenshot working.
+
+Evidence and the facts behind every choice (VNC-scripted consent,
+`sshd-keygen-wrapper` as the ssh-context TCC key, `see`'s `layer != 0`
+panel limitation, the display-refit trap):
+[docs/design.md](docs/design.md) §Gate result / §Bake result.
+
+Next up: wire `verify.sh` (the daily loop is still a WIP skeleton) and
+use it for wand `t-k4hf` / sill `t-cp90`. Tracked as `projects/t-8ffm`.
 
 ## Layout
 

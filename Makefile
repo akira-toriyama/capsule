@@ -5,7 +5,9 @@
 # can't run on a hosted macOS runner). `make verify` is the DAILY op and
 # is nearly free (APFS copy-on-write clone).
 
-BASE    ?= ghcr.io/cirruslabs/macos-tahoe-base:latest   # macOS 26 = sill/wand floor
+# macOS 26 floor; vanilla suffices (gate-proven). NB: no trailing
+# comments on assignments — make would keep the spaces in the value.
+BASE    ?= ghcr.io/cirruslabs/macos-tahoe-vanilla:latest
 IMAGE   ?= capsule-base
 PROFILE ?= wand
 

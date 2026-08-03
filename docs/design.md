@@ -238,7 +238,55 @@ New verified facts (correcting / extending the notes above):
   path autocompletion in Go-to sheets can still mangle input — clear the
   field and retype when it does).
 
-Artifacts: consented base VM = `capsule-gate-base` (local, stopped,
-reusable for the packer-less loop until the bake lands). The ephemeral
-clone was deleted after the run, as designed. Evidence screenshots live
-in the session scratchpad only; the durable record is this section.
+The ephemeral clone was deleted after the run, as designed. Evidence
+screenshots live in the session scratchpad only; the durable record is
+this section. The hand-made gate base was superseded by `make bake`
+(below) and deleted.
+
+## Bake result — `make bake` is zero-touch (2026-08-03)
+
+The gate's manual steps are now the recipe, and one command produces a
+consented base: **`make bake`** = packer build (~40 s) →
+`provision/30-consent-core.sh` (scripted TCC consent over VNC) →
+stopped, reusable `capsule-base`. Verified by cloning the baked image
+and observing, in the fresh clone: AX + Screen Recording + Event
+Synthesizing all **Granted**, peekaboo 3.9.4 and `capsule-click`
+present, and `image --mode screen` capturing successfully — with zero
+prompts and zero host windows.
+
+Design decisions this run settled:
+
+- **The guest stays toolchain-free.** peekaboo (whole Cellar dir, so
+  `@rpath` dylibs ride along) and the host-compiled `capsule-click` are
+  shipped in as binaries; `provision/10-clt.sh` is explicitly NOT part
+  of the core bake. Apps are built and signed on the host and arrive
+  over a read-only share, and JSON is parsed on the host.
+- **A per-host SSH key** (`~/.tart/capsule-ssh/`, generated on first
+  bake, never in git) is seeded by the recipe, so the daily loop and
+  the consent script drive VMs without password auth.
+- **The bake is base-agnostic**: `macos-tahoe-vanilla` is enough — no
+  need for the heavier `-base` variant.
+
+Four failure modes hit and fixed while proving this (all encoded, none
+left as tribal knowledge):
+
+1. `scp` does not create destination directories → a `mkdir -p` shell
+   provisioner must precede every `file` provisioner.
+2. A trailing comment on a Makefile assignment keeps the spaces in the
+   value → `tart pull "ghcr.io/…:latest "` fails to parse the name.
+3. **`tart set --display` alone does not pin the resolution**:
+   display-refit let the guest serve a 1280px-wide framebuffer while
+   `tart get` still reported 1024x768, so every click coordinate was
+   off. `--no-display-refit` is mandatory, and the script aborts if the
+   measured framebuffer is not a 1024x768 multiple.
+4. **Fixed sleeps cannot drive the privacy panes.** Rows render seconds
+   after the window opens, and the base image restores a Terminal
+   window that can sit *on top* of System Settings (the click then
+   lands in the shell and the password is typed at the prompt —
+   `zsh: command not found: admin`). The script now pixel-probes an
+   anchor (pane-white ⇒ Settings frontmost) plus the first row's dark
+   icon before clicking, retries 3×, kills the restored Terminal, and
+   the recipe disables window restore. Note the toggle itself is
+   near-white whether on or off, so it cannot be its own probe —
+   readiness must be read from the icon, and success from
+   `peekaboo permissions status`, never from the pixels.

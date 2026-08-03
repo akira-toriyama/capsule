@@ -9,9 +9,11 @@
 *.keychain-db
 .signing-id
 
-# Compiled helpers (built inside the VM from the .swift source).
+# Compiled helpers (built on the HOST by bake.sh — the guest is
+# toolchain-free).
 helpers/click
 helpers/*.o
+.build/
 
 # Screenshots / AX dumps captured during a verify run.
 artifacts/
