@@ -52,16 +52,21 @@ This is the family north star applied to VMs: a pushed image is a
 
 ## Status
 
-🚧 **Skeleton.** The recipe has **not** baked end-to-end yet (`packer`
-is not installed) and the verify loop has **not** run in a clone. Files
-marked `WIP` / `DRAFT` are unproven. The one production-ready artifact
-is [`helpers/click.swift`](helpers/click.swift) (rescued verbatim).
+✅ **Gate PASSED (2026-08-03).** The headless vertical slice ran
+end-to-end in an ephemeral clone with zero consent prompts and zero
+host disruption: signed `Wand.app` launched from a read-only share,
+`helpers/click` middle-click opened the tome panel on a `--no-graphics`
+WindowServer, `peekaboo inspect-ui` enumerated the fixture rows, and
+`image --mode screen` captured real pixels. Full evidence + newly
+verified facts (VNC-scripted consent, `sshd-keygen-wrapper` as the
+ssh-context TCC key, `see`'s `layer != 0` panel limitation):
+[docs/design.md](docs/design.md) §Gate result.
 
-Next up is a **risk-gated bring-up**: prove one headless vertical slice
-in an *existing* hand-made VM before investing in the Packer bake. See
-[docs/design.md](docs/design.md) for the decision record, the verified
-facts behind every choice, and the bring-up sequence. Tracked as
-`projects/t-8ffm`.
+The consented local base is `capsule-gate-base` (rebuilt from the
+cached `macos-tahoe-vanilla` — the three hand-made VMs are gone). Next
+up: encode the proven manual steps into the Packer bake
+(`packer/base.pkr.hcl` + `provision/*.sh`, still DRAFT/WIP). Tracked
+as `projects/t-8ffm`.
 
 ## Layout
 

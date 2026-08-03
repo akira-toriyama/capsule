@@ -187,3 +187,58 @@ host-built, cert-signed binary, with zero fresh consent?
 3. **Use it:** unblock wand `t-k4hf` (5 items) and sill/prism `t-cp90`.
    Note wand `t-k4hf` is *also* blocked on the unreleased sill `t-cp90`
    patch — capsule solves *verification*, not *shipping*.
+
+## Gate result — PASS (run 2026-08-03, all five criteria)
+
+The hand-made VMs no longer existed, so the base was rebuilt from the
+locally cached `ghcr.io/cirruslabs/macos-tahoe-vanilla:latest` (macOS
+26.5, SIP on, 1024×768) as `capsule-gate-base`. Every claim below was
+executed and observed this run, end-to-end from the terminal, zero host
+windows, zero human touches:
+
+1. **Zero consent prompts in the clone** — `peekaboo permissions status`
+   reported AX + Screen Recording + Event Synthesizing all Granted at
+   first SSH into the headless clone.
+2. **No tapCreate failure across the path change** — `Wand.app` was
+   granted AX at `~/Wand.app` in the base, then launched in the clone
+   from the read-only virtiofs share (`/Volumes/My Shared Files/wandapp/`);
+   the event tap still worked. Confirms the csreq grant is
+   signature-keyed, not path-keyed.
+3. **Tome panel opens headless** — `helpers/click` middle-click at
+   (512,384) over SSH opened the 250×121 panel on the `--no-graphics`
+   WindowServer (the design's biggest unknown — resolved YES).
+4. **AX enumerates the rows** — `peekaboo inspect-ui --app Wand` returned
+   10 elements: the panel, the frontmost-app header row, and the fixture
+   rows Alpha / Beta / Sort (+ SF-symbol icons a.circle / b.circle).
+5. **Bonus: non-empty screenshot** — `peekaboo image --mode screen`
+   produced a real 2 MB capture showing the themed panel.
+
+New verified facts (correcting / extending the notes above):
+
+- **Consent bake IS scriptable, human-zero** — `tart run
+  --vnc-experimental` + `vncdotool` (pip) drives the in-VM consent UI
+  from the terminal with zero host windows: screenshot → click toggle →
+  type the `admin` password. `provision/30-tcc-consent.md`'s "not
+  scriptable" meant TCC.db seeding; the *click path* automates fine.
+- **`sshd-keygen-wrapper` is the master key for ssh-driven tools**: after
+  one failed AX attempt over SSH, macOS auto-registers
+  `/usr/libexec/sshd-keygen-wrapper` in the Accessibility list — toggle
+  it on and *every* binary run over SSH (peekaboo, click) inherits AX.
+  For Screen Recording it must be added by hand (+ → ⌘⇧G → type the
+  path), and it lands **pre-enabled, no password prompt**.
+- **peekaboo `see --app` cannot window-target the tome panel**
+  (`layer != 0` — non-activating NSPanels are filtered out of the
+  shareable-window pipeline). Use `inspect-ui --app` for the AX tier and
+  `image --mode screen` for pixels. The AX-tier default in this repo is
+  therefore `inspect-ui`, not `see`.
+- **Don't invoke `python3`/dev tools inside the vanilla VM** — it pops
+  the CLT install dialog (visible in the gate screenshot). Parse JSON on
+  the host; keep the guest toolchain-free until `provision/10` bakes CLT.
+- vncdotool typing is lossy at full speed (`--delay 80`+ needed;
+  path autocompletion in Go-to sheets can still mangle input — clear the
+  field and retype when it does).
+
+Artifacts: consented base VM = `capsule-gate-base` (local, stopped,
+reusable for the packer-less loop until the bake lands). The ephemeral
+clone was deleted after the run, as designed. Evidence screenshots live
+in the session scratchpad only; the durable record is this section.
