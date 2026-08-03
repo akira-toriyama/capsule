@@ -20,4 +20,5 @@ swift --version || { echo "no swift toolchain" >&2; exit 1; }
 command -v peekaboo >/dev/null 2>&1 || brew install peekaboo || true
 
 # OPTIONAL (per-profile): `xcodes install <ver>` for in-VM `swift test`.
-# The existing sill-focusprobe VM ran GUI checks fine with "Xcode無".
+# GUI checks need no Xcode in the guest at all — the core bake ships no
+# toolchain and apps are built on the host (docs/design.md §Bake result).

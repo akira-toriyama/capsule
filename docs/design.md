@@ -22,10 +22,13 @@ variables.
 
 ### 1. A dedicated repo — YES, `capsule`
 
-There are already **three hand-made** Tart VMs (`facet-test-26`,
-`sill-focusprobe`, `facet-test-rec` — identical 4CPU/8GB/50GB/1024×768
-shells) built by hand, three times, with the pattern captured nowhere.
-The right move is to encode the *recipe*, not hand-build a fourth. The
+*(The argument as it stood on 2026-07-18.)* There were then **three
+hand-made** Tart VMs (`facet-test-26`, `sill-focusprobe`,
+`facet-test-rec` — identical 4CPU/8GB/50GB/1024×768 shells) built by
+hand, three times, with the pattern captured nowhere. The right move is
+to encode the *recipe*, not hand-build a fourth. **All three have since
+been deleted** — which is the argument's own vindication: the pattern
+was the durable thing, the VMs were not. The
 per-app needs (patched-dependency build override, unpushed-branch rsync,
 per-app fixture, per-app cert, middle-click helper, per-app driver) are
 recurring and shared across ≥2 first-users plus the family — clearing
@@ -154,14 +157,20 @@ missed it.
   read-only — keeps the baked image toolchain-free. Don't run
   write-heavy builds over the virtiofs mount.
 - **Footgun:** `tart clone`/`pull` auto-prune the OCI cache (100 GB LRU
-  default). `~/.tart` is already ~147 G with ~277 G free — a naive clone
-  could silently evict the three hand-made VMs. Always set
-  `TART_NO_AUTO_PRUNE=1` in the loop.
-- The tahoe base is ~27 GB / 96 layers (local manifest) — heavier than
-  the prior "22.9 GB". Both `macos-tahoe-base` (26) and
-  `macos-sequoia-base` (15) are already cached locally.
+  default) — a naive clone could silently evict your other VMs,
+  including `capsule-base` itself. Always set `TART_NO_AUTO_PRUNE=1` in
+  the loop.
+- The vanilla tahoe base is ~27 GB (local manifest). What is actually
+  cached drifts: as of 2026-08-03 only
+  `ghcr.io/cirruslabs/macos-tahoe-vanilla:latest` is, and `make bake`
+  pulls it if absent — read `tart list` rather than trusting this line.
 
 ## Bring-up sequence (risk-gated)
+
+*(The plan as written on 2026-07-18, kept because the sections below
+report against it. Every step has since been executed — step 1 by hand
+from a vanilla base because the hand-made VMs it names were gone by
+then, steps 2 and 3 by `make bake` / `make verify`.)*
 
 The biggest unknown is **not** TCC or the 27 GB pull (both de-risked
 above); it is that the **integrated headless chain has never run once**
@@ -432,20 +441,32 @@ Two method notes worth keeping:
   branch belonging to another session, and the loop still built and
   verified `main` (bebd902) from its own detached worktree.
 
+### Distribution — the `.tvm` round trip works, grants included (2026-08-03)
+
+`make export` → `tart import` → `make verify` against the *imported*
+image, measured the same day:
+
+| step | result |
+|---|---|
+| `make export` | `capsule-base.tvm`, **20,182,250,094 B** (~18.8 GiB), ~29 s |
+| `tart import` | ~13 s |
+| `verify` on the import | **PASS** — Accessibility / Screen Recording / Event Synthesizing all Granted in the fresh clone, tome panel open, AX rows asserted |
+
+So the baked TCC state rides inside the `.tvm` and survives the round
+trip — the registry-free path is a real distribution mechanism, not a
+theoretical fallback. It is also ~7 GB smaller than the 27 GB the OCI
+base occupies. `make import` overwrites `$(IMAGE)`; import under another
+name (`tart import x.tvm <other>`) when you want to keep the current one.
+
 ### Still unproven
 
-- `make export` / `make import` have never been run. That `.tvm` round
-  trip is the *only* sanctioned distribution path (there is deliberately
-  no registry push), so the fallback for "move this image to another
-  machine" is untested — including whether the baked TCC grants survive
-  the round trip.
 - The recipe does not pin peekaboo: `bake.sh` ships whatever version the
   host happens to have (3.9.4 at the time of writing) and records it
   nowhere, so "rebuild from the committed recipe" is reproducible today
   but not across time or machines. `helpers/UPSTREAM.md` planned this
   pin and never did it.
-- `profiles/sill-prism.toml` and `profiles/cast-rec.toml` remain
-  skeletons. sill-prism's premise also needs re-checking: prism appears
+- `profiles/sill-prism.toml` remains a skeleton, and its premise needs
+  re-checking before anyone fills it in: prism appears
   to be a target *inside* sill rather than its own repo, which would
   make the profile's `worktree`/`patched-deps` shape wrong, not just
   unfilled.

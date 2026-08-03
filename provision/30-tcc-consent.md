@@ -30,9 +30,12 @@ The steps below document the mechanism and the per-app variant.
    lands pre-enabled with no password prompt.
 3. Launch a `package.sh`-signed `Wand.app` once (`open ~/Wand.app` over
    SSH); macOS opens the Accessibility pane with **Wand** listed —
-   toggle ON over VNC. TCC keys this to the signing cert (see
-   `provision/40-signing-cert.sh`), so it survives rebuilds *and* runs
-   from other paths (the gate launched it from the RO virtiofs share).
+   toggle ON over VNC. TCC keys this to the signing cert, so it survives
+   rebuilds *and* runs from other paths (the gate launched it from the
+   RO virtiofs share). **The core bake no longer does this**: a
+   host-signed app launched as a child of the SSH session inherits the
+   `sshd-keygen-wrapper` grant, so there is no per-app TCC step — see
+   docs/design.md §Verify loop.
 4. Verify with `peekaboo permissions status --all-sources` (everything
    Granted), then `tart stop` → this becomes the reusable base.
 

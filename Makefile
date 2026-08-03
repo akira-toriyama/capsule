@@ -12,7 +12,7 @@ IMAGE   ?= capsule-base
 PROFILE ?= wand
 
 # A bare clone/pull auto-prunes the OCI cache (100 GB LRU) and could
-# evict the hand-made VMs. Never let the loop do that.
+# evict your other VMs, capsule-base included. Never let the loop do that.
 export TART_NO_AUTO_PRUNE = 1
 
 .PHONY: help bake verify export import
