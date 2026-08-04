@@ -20,8 +20,11 @@ branch = "main"
 
 # SwiftPM local-path dependency overrides for unreleased dependencies.
 # Empty for the env-proof; the t-k4hf run needs a patched local sill
-# (t-cp90, unreleased):
-#   ["sill=/Volumes/workspace/github.com/akira-toriyama/sill"]
+# (t-cp90, unreleased). Point at a clone CAPSULE OWNS, detached at the
+# wanted commit — e.g. ["sill=~/.tart/capsule-deps/sill"] — NEVER at
+# the live sill checkout: that tree belongs to another session and
+# reintroduces exactly the cross-session coupling capsule exists to
+# remove (tried and rejected — docs/design.md §patched-deps).
 patched-deps = []
 
 # Host build. package.sh does its own `swift build -c release`, then
