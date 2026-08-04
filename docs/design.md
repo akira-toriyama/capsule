@@ -512,11 +512,14 @@ What did NOT generalize — found by this run, fixed in capsule:
 
 ### Still unproven
 
-- The recipe does not pin peekaboo: `bake.sh` ships whatever version the
-  host happens to have (3.9.4 at the time of writing) and records it
-  nowhere, so "rebuild from the committed recipe" is reproducible today
-  but not across time or machines. `helpers/UPSTREAM.md` planned this
-  pin and never did it.
+- ~~The recipe does not pin peekaboo~~ — closed 2026-08-04 (t-qahk):
+  `bake.sh` pins `PEEKABOO_PIN=3.9.4` (the version every measured
+  peekaboo claim in this file was taken against) and aborts the bake on
+  mismatch — peekaboo is the assert semantics, so a silent version
+  change would change what PASS means. The second, unpinned path
+  (`provision/10-clt.sh`'s guest-side `brew install peekaboo`) was
+  removed. Bumping the pin = update it, re-verify every profile,
+  re-read this file's peekaboo claims.
 - `profiles/sill-prism.toml` remains a skeleton, and its premise needs
   re-checking before anyone fills it in: prism appears
   to be a target *inside* sill rather than its own repo, which would

@@ -15,7 +15,8 @@ panel opens on a **middle-click**, so all five wand `t-k4hf` acceptance
 items are undriveable without this ~60-line CGEvent shim.
 
 - **Interim:** keep `click.swift`, pin the peekaboo version it
-  complements, treat it as a clearly-deletable shim.
+  complements (done 2026-08-04: `bake.sh` `PEEKABOO_PIN`, t-qahk),
+  treat it as a clearly-deletable shim.
 - **Upstream (non-blocking):** open an issue/PR on `openclaw/Peekaboo`
   for `click --middle` / `--button <n>` (+ `otherMouse` on `drag`/
   `swipe`). No existing issue found → no duplication. peekaboo is a

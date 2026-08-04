@@ -14,10 +14,10 @@ if [ -d /Library/Developer/CommandLineTools ]; then
 fi
 swift --version || { echo "no swift toolchain" >&2; exit 1; }
 
-# peekaboo = the GUI-verification harness (screenshot + AX + click/type).
-# brew is fine here: peekaboo is third-party. The source-over-brew rule
-# binds only akira-toriyama's own CLIs.
-command -v peekaboo >/dev/null 2>&1 || brew install peekaboo || true
+# peekaboo is deliberately NOT installed here: the recipe ships the
+# host's PINNED copy into /Users/admin/peekaboo at bake (bake.sh
+# PEEKABOO_PIN). A guest-side `brew install` would be a second,
+# unpinned copy that silently shadows the pinned one (t-qahk).
 
 # OPTIONAL (per-profile): `xcodes install <ver>` for in-VM `swift test`.
 # GUI checks need no Xcode in the guest at all — the core bake ships no
