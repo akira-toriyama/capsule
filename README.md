@@ -7,7 +7,7 @@
 
 Reproducible, disposable **[Tart](https://tart.run)** macOS VMs for
 **headless GUI verification** of the akira-toriyama Swift app family
-(wand, sill, prism, facet, focusfx, …).
+(wand, sill, prism, facet, …).
 
 Host-machine GUI automation steals focus, moves windows, and switches
 Spaces — it disrupts the developer at the keyboard and is

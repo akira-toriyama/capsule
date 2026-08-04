@@ -17,7 +17,7 @@
   と Makefile の `push` target 不在が正本）。許諾は将来 registry が必要に
   なったときのために残してある。
 - 目的: akira-toriyama Swift app family（wand, sill, prism, facet,
-  focusfx, …）向けの headless GUI 検証環境（Tart VM）。設計判断と
+  …）向けの headless GUI 検証環境（Tart VM）。設計判断と
   検証済み事実は [docs/design.md](docs/design.md) が正典。
 - Swift app 側からこの検証環境を使う入口は dotfiles 管理の
   `macos-gui-verify` skill（そこに capsule への導線を置く）。
