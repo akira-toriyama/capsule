@@ -523,8 +523,26 @@ What did NOT generalize — found by this run, fixed in capsule:
   (`provision/10-clt.sh`'s guest-side `brew install peekaboo`) was
   removed. Bumping the pin = update it, re-verify every profile,
   re-read this file's peekaboo claims.
-- `profiles/sill-prism.toml` remains a skeleton, and its premise needs
-  re-checking before anyone fills it in: prism appears
-  to be a target *inside* sill rather than its own repo, which would
-  make the profile's `worktree`/`patched-deps` shape wrong, not just
-  unfilled.
+- ~~`profiles/sill-prism.toml` remains a skeleton~~ — closed 2026-08-04
+  (t-c4pv): the premise WAS wrong — prism is an executableTarget inside
+  sill (an `akira-toriyama/prism` repo does not exist), so the profile
+  builds the sill worktree with `patched-deps = []`. First green run
+  the same day: 268 AX elements in a fresh clone (peekaboo 3.9.4 saw 0
+  on this same app, the t-c4pv measurement), fixture theme + WidgetPage
+  chrome asserted, bonus screenshot captured. Two constraints the run
+  surfaced, both encoded in the profile/driver comments:
+  - **A pure-SwiftPM executable with resources resists .app packaging.**
+    The generated `Bundle.module` accessor probes exactly two paths:
+    `Bundle.main.bundleURL/<name>.bundle` and the absolute host
+    `.build` path. Launched from `Contents/MacOS` the bundleURL is the
+    bundle ROOT, which codesign refuses to seal ("unsealed contents
+    present in the bundle root") — both candidates are dead ends. The
+    profile reproduces the `swift run` shape INSIDE the bundle: real
+    binary + resource bundles side by side under
+    `Contents/Resources/bin/`, and `Contents/MacOS/<exe>` is a shim
+    that execs it (Foundation then treats it as a flat launch, so the
+    bundle is found beside the binary and everything stays sealed).
+  - **The shim's un-normalized exec path is the process command line**
+    (`…/Contents/MacOS/../Resources/bin/prism`), so drivers must
+    pgrep/pkill on `Resources/bin/prism` — a `/Contents/Resources/…`
+    pattern silently never matches and reads as "app did not start".
