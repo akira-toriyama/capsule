@@ -1,0 +1,20 @@
+# capsule gate fixture — prism gallery config-proof.
+#
+# theme = "synthwave" is the proof the fixture was PARSED: prism's
+# built-in default (and the repo's own prism.toml) is "dracula", and
+# the top bar renders the selected theme name as literal text
+# (Gallery.swift's `Text(selectedTheme)`), so the driver asserting
+# "synthwave" in the AX dump can only pass on THIS config.
+#
+# show-effects = false keeps the gallery static — no cycling accents or
+# flash strips — so the bonus screenshot is deterministic.
+#
+# widget = "ThemedButton" deep-links a WidgetPage: WITHOUT it the
+# default family ("palette") opens the FoundationAppPage, which has no
+# segmented control (measured 2026-08-04) — the pinned
+# Overview | Specimens | API segments are the driver's
+# SwiftUI-content assert, so the fixture must land on a WidgetPage.
+
+theme = "synthwave"
+show-effects = false
+widget = "ThemedButton"

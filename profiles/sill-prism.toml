@@ -1,43 +1,101 @@
-# capsule profile: sill/prism. prism is a REGULAR (non-LSUIElement) app,
-# so it exercises sill's `hidesOnDeactivate = activationPolicy() !=
-# .accessory` branch and proves the t-cp90 fix doesn't regress
-# regular-app menus.
+# capsule profile: sill/prism — the theme-preview app. prism is an
+# executableTarget INSIDE the sill repo (the earlier skeleton assumed
+# an akira-toriyama/prism repo that does not exist), so the worktree is
+# sill itself and `patched-deps` is empty — prism always builds against
+# the sill commit it ships in.
 #
-# STATUS: WIP skeleton — prism is not cloned locally, and this is the
-# profile that will first exercise `patched-deps` (implemented in
-# verify.sh, never yet run). Key names track profiles/wand.toml, which
-# is the worked example.
+# This profile is the t-c4pv measurement: peekaboo 3.9.4 reported
+# `ui_elements: 0` for prism, and the facet run proved that failure
+# class is peekaboo's walker, not the app's AX (docs/design.md,
+# 2026-08-04). PASS here = capsule-ax-dump reads prism's SwiftUI
+# gallery, closing the "prism is unverifiable headlessly" premise.
+#
+# Style: taplo's default (one space around `=`, comments on their own
+# line). The fleet's taplo CI enforces it.
 
 name = "sill-prism"
-repos = ["akira-toriyama/prism", "akira-toriyama/sill"]
+repos = ["akira-toriyama/sill"]
 
-# prism must be cloned (absent locally); it builds against a patched
-# local sill carrying the t-cp90 hidesOnDeactivate one-liner.
-worktree = "/Volumes/workspace/github.com/akira-toriyama/prism"
+# The loop builds a DETACHED worktree of sill at `branch` (under
+# ~/.tart/capsule-work/sill-prism), never touching the live checkout.
+worktree = "/Volumes/workspace/github.com/akira-toriyama/sill"
 branch = "main"
 
-# A clone capsule owns, detached at the commit under test — NOT the app
-# repo's live checkout, which belongs to whatever session has it open
-# (see docs/design.md §patched-deps). Populate before the first run:
-#   git clone --no-checkout /Volumes/workspace/github.com/akira-toriyama/sill \
-#     ~/.tart/capsule-deps/sill && git -C ~/.tart/capsule-deps/sill checkout --detach <rev>
-patched-deps = ["sill=~/.tart/capsule-deps/sill"]
+# prism lives in sill — there is no unreleased dependency to override.
+patched-deps = []
 
-# Regular app → no persistent cert / event tap (those are wand's, for
-# the AX grant its CGEventTap needs).
-# TODO: confirm prism's bundle name and packaging entry point once it is
-# cloned.
+# prism is `swift run`-shaped upstream (no bundle in the repo), but the
+# harness contract is a signed .app (verify.sh stages + codesigns it),
+# so the build assembles a minimal bundle here. Ad-hoc signing is fine:
+# prism USES no TCC-gated API — the AX reader is capsule-ax-dump, whose
+# grant rides the baked sshd-keygen-wrapper responsibility, so nothing
+# is keyed to prism's own signing identity (unlike wand/facet, whose
+# persistent certs protect grants THEY hold).
 signing = ""
-build = "./package.sh"
+build = '''
+set -e
+swift build -c release --product prism
+rm -rf Prism.app
+mkdir -p Prism.app/Contents/MacOS Prism.app/Contents/Resources/bin
+# SwiftPM's GENERATED Bundle.module accessor probes exactly two paths:
+# Bundle.main.bundleURL/<name>.bundle and the absolute host .build path
+# (absent in the guest). Run from Contents/MacOS the bundleURL is the
+# .app ROOT — which codesign refuses to seal ("unsealed contents
+# present in the bundle root"; both dead ends measured 2026-08-04). So
+# reproduce the `swift run` shape prism is designed for INSIDE the
+# bundle: the real binary + resource bundles live side by side under
+# Contents/Resources/bin (a path Foundation treats as a bare/flat
+# launch, so bundleURL = that dir), and Contents/MacOS/prism is a shim
+# that execs it — verify.sh's app contract stays intact.
+cp .build/release/prism Prism.app/Contents/Resources/bin/prism
+for b in .build/release/*.bundle; do
+  cp -R "$b" Prism.app/Contents/Resources/bin/
+done
+cat > Prism.app/Contents/MacOS/prism <<'SHIM'
+#!/bin/sh
+exec "$(dirname "$0")/../Resources/bin/prism" "$@"
+SHIM
+chmod +x Prism.app/Contents/MacOS/prism
+cat > Prism.app/Contents/Info.plist <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>prism</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.akira-toriyama.prism.capsule</string>
+	<key>CFBundleName</key>
+	<string>prism</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+</dict>
+</plist>
+PLIST
+codesign --force --sign - Prism.app
+'''
 app = "Prism.app"
 
-# TODO: fixture with theme='terminal' + a ThemedMenu widget; confirm
-# prism's config path.
-fixture = "fixtures/prism-menu.toml"
+# The fixture is config, not product: prism reads $PRISM_CONFIG (or
+# ./prism.toml, but the share is :ro and cwd-dependent — the env var is
+# the deterministic path).
+fixture = "fixtures/prism-gallery.toml"
 fixture-dest = ".config/prism/config.toml"
-launch-env = []
 
+# PRISM_WINDOW_W/H are prism's own screenshot seams: the default
+# 1120x820 x uiScale(1.5) window would overflow the pinned 1024x768
+# guest display. AX would not care, but the bonus screenshot should
+# frame the gallery.
+launch-env = [
+  "PRISM_CONFIG=/Users/admin/.config/prism/config.toml",
+  "PRISM_WINDOW_W=1000",
+  "PRISM_WINDOW_H=700",
+]
+
+# AX-only is human-zero forever; the screenshot adds a bonus pixel
+# artifact (Screen Recording re-confirms ~monthly on Tahoe).
 verify-tier = "screenshot"
 
-# TODO
-driver = "drivers/prism-render.sh"
+driver = "drivers/prism-gallery.sh"
