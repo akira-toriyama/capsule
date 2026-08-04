@@ -1,0 +1,48 @@
+# capsule profile: halo — the focus-ring overlay. Fourth app on the
+# rack, and the family's first custom-drawn one: the ring is pure Core
+# Graphics on a borderless click-through NSWindow, so there is no AX
+# TEXT to assert (design.md's rule of thumb: custom-drawn =
+# screenshot-only... for CONTENT). What IS machine-readable is the
+# overlay window's GEOMETRY: halo hugs the frontmost window at exactly
+# +24 pt per side (glowPad, a compile-time constant — Border.swift:19),
+# and it live-polls its config every 0.4 s. The driver gates on both:
+# frame math proves the hug, a hot-reload exclude proves the daemon is
+# reading OUR config file. Pixels stay the bonus tier.
+#
+# Style: taplo's default (one space around `=`, comments on their own
+# line). The fleet's taplo CI enforces it.
+
+name = "halo"
+repos = ["akira-toriyama/halo"]
+
+# The loop builds a DETACHED worktree of this repo at `branch` (under
+# ~/.tart/capsule-work/halo), never touching the live checkout.
+worktree = "/Volumes/workspace/github.com/akira-toriyama/halo"
+branch = "main"
+
+# main pins released tags only (sill 5.0.0, swift-toml-edit 2.3.1).
+patched-deps = []
+
+# Host build. package.sh does `swift build -c release`, assembles
+# Halo.app and signs with the persistent cert from .signing-id. halo
+# itself only touches AX APIs when shake=true (the fixture says false),
+# but the persistent identity keeps the family invariant: nothing in a
+# verify run is ad-hoc except prism, which holds no grants.
+signing = "./setup-signing-cert.sh --silent"
+build = "./package.sh"
+app = "Halo.app"
+
+# The fixture is config, not product: halo reads exactly
+# ~/.config/halo/config.toml (no env-var override exists) and
+# re-reads it on a 0.4 s mtime poll — the driver exploits the re-read.
+fixture = "fixtures/halo-hug.toml"
+fixture-dest = ".config/halo/config.toml"
+
+# HALO_DEBUG mirrors /tmp/halo.log to stderr -> /tmp/capsule-app.log.
+launch-env = ["HALO_DEBUG=1"]
+
+# The ring is pixels, so the screenshot is a real artifact here — but
+# still a bonus: the gate is the frame math + hot-reload proof above.
+verify-tier = "screenshot"
+
+driver = "drivers/halo-hug.sh"
