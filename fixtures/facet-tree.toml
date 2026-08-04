@@ -1,0 +1,25 @@
+# capsule gate fixture — facet tree env-proof.
+#
+# A minimal, fully deterministic facet config: desktop 1 (the VM's only
+# mac desktop) is declared as a classic WORKSPACE desktop with two NAMED
+# workspace cells. Naming both sections is the point — the driver
+# asserts the labels in the tree's AX dump, so a PASS proves facet
+# parsed THIS config (a zero-config fallback would render 5 unnamed
+# workspaces and fail the assert loudly).
+#
+# [config] auto-persistence is deliberately absent (off): the fixture
+# must be the single source of what the run verifies, so facet must
+# never promote a snapshot over it.
+#
+# STATUS: VERIFIED — `make verify PROFILE=facet` drives this fixture in
+# a fresh clone and asserts both workspace headings in the AX tree
+# (2026-08-04, against a base re-baked the same day with capsule-ax-dump;
+# wand re-verified green on the same base).
+
+[[desktop.1.section]]
+label = "Alpha"
+layout = "bsp"
+
+[[desktop.1.section]]
+label = "Beta"
+layout = "stack"

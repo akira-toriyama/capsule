@@ -1,0 +1,49 @@
+# capsule profile: facet — the second app on the rack, proving the
+# "adding an app = profile + driver + fixture" claim (projects/t-3jxz).
+# `make verify PROFILE=facet`.
+#
+# Style: taplo's default (one space around `=`, comments on their own
+# line). The fleet's taplo CI enforces it — aligned `=` fails the check,
+# and an aligned block with trailing comments crashes the formatter.
+
+name = "facet"
+repos = ["akira-toriyama/facet"]
+
+# The loop builds a DETACHED worktree of this repo at `branch` (under
+# ~/.tart/capsule-work/facet), so it never checks out a branch in the
+# tree a human or another session has open.
+#
+# NOT `main`: main's tree is one custom-drawn NSView (SidebarView+Draw)
+# with ZERO row AX — inspect-ui sees a single opaque element (measured
+# 2026-08-04), so the AX tier cannot assert anything there. The SwiftUI
+# render swap (PR #448) is what makes the tree AX-readable, and it is
+# also the surface t-eedb actually needs verified.
+worktree = "/Volumes/workspace/github.com/akira-toriyama/facet"
+branch = "feat/swiftui-tree-render-swap"
+
+# facet's main pins released deps — no local overrides needed.
+patched-deps = []
+
+# Host build. package.sh does `swift build -c release`, assembles
+# Facet.app and signs it with the PERSISTENT cert from .signing-id
+# (written by setup-signing-cert.sh, idempotent) — the harness drives
+# that bundle, never `.build/release/facet`, because an ad-hoc re-sign
+# drops the baked Accessibility grant.
+signing = "./setup-signing-cert.sh --silent"
+build = "./package.sh"
+app = "Facet.app"
+
+# The fixture is config, not product: facet reads exactly one path in
+# the guest HOME (the shared bundle is read-only).
+fixture = "fixtures/facet-tree.toml"
+fixture-dest = ".config/facet/config.toml"
+
+# FACET_DEBUG routes Log.debug to stderr -> /tmp/capsule-app.log, which
+# is how the driver diagnoses a server that boots but renders nothing.
+launch-env = ["FACET_DEBUG=1"]
+
+# AX-only is human-zero forever; the screenshot adds a bonus pixel
+# artifact (Screen Recording re-confirms ~monthly on Tahoe).
+verify-tier = "screenshot"
+
+driver = "drivers/facet-tree.sh"

@@ -242,7 +242,9 @@ New verified facts (correcting / extending the notes above):
   (`layer != 0` — non-activating NSPanels are filtered out of the
   shareable-window pipeline). Use `inspect-ui --app` for the AX tier and
   `image --mode screen` for pixels. The AX-tier default in this repo is
-  therefore `inspect-ui`, not `see`.
+  therefore `inspect-ui`, not `see`. *(Superseded 2026-08-04: inspect-ui
+  is blind to SwiftUI subtrees, so the AX tier now runs on capsule's own
+  `capsule-ax-dump` — see §Adding an app.)*
 - **Don't invoke `python3`/dev tools inside the vanilla VM** — it pops
   the CLT install dialog (visible in the gate screenshot). Parse JSON on
   the host; keep the guest toolchain-free until `provision/10` bakes CLT.
@@ -457,6 +459,56 @@ trip — the registry-free path is a real distribution mechanism, not a
 theoretical fallback. It is also ~7 GB smaller than the 27 GB the OCI
 base occupies. `make import` overwrites `$(IMAGE)`; import under another
 name (`tart import x.tvm <other>`) when you want to keep the current one.
+
+## Adding an app — the three-file contract (proven with facet, 2026-08-04)
+
+An app joins the rack with exactly three files; nothing in `verify.sh`,
+the recipe, or the Makefile changes. facet was the second app through
+(`make verify PROFILE=facet`, t-3jxz), which turned the "3 files per
+app" claim from design into measurement.
+
+| file | role | copy from wand, then change |
+|---|---|---|
+| `profiles/<app>.toml` | the per-app variable surface | `worktree`/`branch` → the app repo + ref; `app` → its bundle name; `signing`/`build` → its cert + package scripts; `fixture-dest` → the config path the app reads; `launch-env` → its debug env var |
+| `drivers/<app>-<x>.sh` | `drive()` = launch, poke, assert | the poke (wand: middle-click; facet: a client-mode `--view tree` invocation of the same binary) and the AX assert (the fixture's labels) |
+| `fixtures/<app>-<x>.toml` | a COMPLETE app config making the GUI deterministic | declare named, unmistakable content (facet: two labeled workspaces) so the assert proves *this* config rendered, not any default |
+
+What generalized without change: the detached-worktree host build, the
+persistent-cert signing step, the `:ro` share, launch-as-SSH-child
+(the AX grant applied to facet exactly as it did to wand — second data
+point for "no per-app TCC bake"), the fixture install, and the
+artifact/verdict plumbing.
+
+What did NOT generalize — found by this run, fixed in capsule:
+
+- **peekaboo's `inspect-ui` cannot see SwiftUI content.** facet's
+  SwiftUI tree surfaced as ONE opaque childless "system dialog"
+  element (56 elements dumped, all of them menu bar) while the panel
+  was visibly rendering both fixture workspaces on screen. A raw
+  `AXUIElementCopyAttributeValue` walk sees the full hierarchy:
+  `AXGroup/AXHostingView → AXScrollArea → AXOpaqueProviderGroup/
+  AXOpaqueProviderList → AXHeading desc="WORKSPACE · ALPHA"`. So the
+  blocker is peekaboo's walker, not the app's AX. This also explains
+  icebox t-c4pv ("prism has 0 UI elements") — prism is SwiftUI too.
+  The AX tier now runs on capsule's own walker,
+  `helpers/ax-dump.swift` → `capsule-ax-dump`, baked into the image
+  beside `capsule-click`; peekaboo remains the pixels + permissions
+  tool. (Setting `AXEnhancedUserInterface` on the app was tried first
+  and rejected with AXError −25208 — not a viable workaround.)
+- **An app whose GUI is custom-drawn has no AX tier at all.** facet
+  `main`'s AppKit tree is a single `draw()`-everything NSView: zero
+  row elements under ANY walker. The profile therefore pins
+  `feat/swiftui-tree-render-swap` (PR #448) — the SwiftUI render swap
+  is precisely what makes the tree machine-readable, and it is the
+  surface t-eedb needs verified anyway. Rule of thumb for the family:
+  **SwiftUI (or real AppKit controls) = AX-verifiable; custom-drawn =
+  screenshot-only.**
+- **Two-mode binaries need no extra plumbing.** facet's tree is
+  summoned by running the same shared bundle again in client mode
+  (`facet --view tree` posts over the DNC and exits); the DNC delivery
+  works fine between two SSH-spawned processes in the same user
+  session. The client exits 0 whether or not a server heard it, so the
+  driver's proof is always the AX assert, never the summon.
 
 ### Still unproven
 

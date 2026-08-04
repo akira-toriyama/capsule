@@ -48,10 +48,11 @@ PEEKABOO_BIN="$(command -v peekaboo)" || {
 }
 PEEKABOO_DIR="$(dirname "$(dirname "$(readlink -f "$PEEKABOO_BIN")")")"
 
-# Compile the middle-click helper on the HOST (guest has no toolchain).
+# Compile the guest helpers on the HOST (guest has no toolchain).
 mkdir -p .build
 swiftc -O -o .build/capsule-click helpers/click.swift
-echo "bake: compiled helpers/click.swift -> .build/capsule-click"
+swiftc -O -o .build/capsule-ax-dump helpers/ax-dump.swift
+echo "bake: compiled helpers/{click,ax-dump}.swift -> .build/"
 
 # --- 2. packer build ------------------------------------------------
 
@@ -67,6 +68,7 @@ packer build -force \
   -var "ssh_pubkey=${PUBKEY}" \
   -var "peekaboo_dir=${PEEKABOO_DIR}" \
   -var "click_bin=.build/capsule-click" \
+  -var "axdump_bin=.build/capsule-ax-dump" \
   packer/base.pkr.hcl
 
 # --- 3. TCC consent (scripted, human-zero) --------------------------
