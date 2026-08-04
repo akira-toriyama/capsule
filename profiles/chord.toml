@@ -1,0 +1,49 @@
+# capsule profile: chord — the key/mouse-remap daemon, and the rack's
+# first fully HEADLESS app: LSUIElement, no window, no menu-bar item,
+# no AX surface AT ALL (chord/CLAUDE.md "the daemon is intentionally
+# invisible"). The AX tier therefore cannot gate here — the gate is the
+# daemon's own query socket (`chord query`, AF_UNIX /tmp/chord-query.sock,
+# JSON chord.query.v1): ax_granted proves the wrapper TCC grant applied,
+# loaded-bindings proves the fixture parsed, `config --show` names the
+# fixture's bindings. Third verify class after AX and screenshot —
+# docs/design.md §Adding an app.
+#
+# Style: taplo's default (one space around `=`, comments on their own
+# line). The fleet's taplo CI enforces it.
+
+name = "chord"
+repos = ["akira-toriyama/chord"]
+
+# The loop builds a DETACHED worktree of this repo at `branch` (under
+# ~/.tart/capsule-work/chord), never touching the live checkout.
+worktree = "/Volumes/workspace/github.com/akira-toriyama/chord"
+branch = "main"
+
+# main pins released tags only (sill 5.0.0, swift-toml-edit 2.3.1).
+patched-deps = []
+
+# Host build. package.sh does `swift build -c release`, assembles
+# Chord.app and signs with the persistent cert from .signing-id
+# (created by setup-signing-cert.sh, idempotent) — chord's event tap is
+# TCC-gated, and in the guest the grant rides the sshd-keygen-wrapper
+# responsibility exactly as wand's tap does.
+signing = "./setup-signing-cert.sh"
+build = "./package.sh"
+app = "Chord.app"
+
+# The fixture is config, not product: chord reads exactly
+# $XDG_CONFIG_HOME/chord/config.toml (no env-var override exists).
+fixture = "fixtures/chord-bindings.toml"
+fixture-dest = ".config/chord/config.toml"
+
+# CHORD_DEBUG mirrors /tmp/chord.log lines to stderr ->
+# /tmp/capsule-app.log, which is how the driver reads a startup that
+# died before the query socket came up.
+launch-env = ["CHORD_DEBUG=1"]
+
+# Not "screenshot": chord renders zero pixels, so a screen capture can
+# never say anything about chord — the gate is the query socket, and a
+# snapshot would only re-photograph the bare desktop.
+verify-tier = "daemon"
+
+driver = "drivers/chord-bindings.sh"
