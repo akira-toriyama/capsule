@@ -537,13 +537,59 @@ What did NOT generalize — found by this run, fixed in capsule:
   is precisely what makes the tree machine-readable, and it is the
   surface t-eedb needs verified anyway. Rule of thumb for the family:
   **SwiftUI (or real AppKit controls) = AX-verifiable; custom-drawn =
-  screenshot-only.**
+  screenshot-only.** *(Refined 2026-08-04 by the chord/halo/perch
+  batch — see §The gate taxonomy below: custom-drawn apps with a real
+  NSWindow still get an AX gate via GEOMETRY, and headless apps gate
+  on their own control channel.)*
 - **Two-mode binaries need no extra plumbing.** facet's tree is
   summoned by running the same shared bundle again in client mode
   (`facet --view tree` posts over the DNC and exits); the DNC delivery
   works fine between two SSH-spawned processes in the same user
   session. The client exits 0 whether or not a server heard it, so the
   driver's proof is always the AX assert, never the summon.
+
+### The gate taxonomy — proven across six profiles (2026-08-04)
+
+chord / halo / perch went through in one day (t-vvq2), each in three
+files with zero harness changes — the contract held for its 4th, 5th
+and 6th app. What the batch generalized is the ANSWER to "what gates
+when there is nothing to read":
+
+| app shape | gate | proven by |
+|---|---|---|
+| SwiftUI / AppKit controls | AX labels via `capsule-ax-dump` | wand, facet, prism |
+| custom-drawn, real NSWindow | AX **geometry**: the overlay window's frame math | halo (hug = target +48/+48, glowPad constant) |
+| pixels out, AX reader in | run the app's OWN reader as the gate | perch (`ax --dump` enumerates the frontmost app) |
+| fully headless daemon | the app's own control channel + log | chord (query socket: ax_granted, binding counts) |
+
+Facts the batch measured, each a first data point:
+
+- **`capsule-ax-dump` lists borderless floating overlay windows.**
+  halo's `.borderless` + `level=.floating` NSWindow — the exact class
+  peekaboo's `see` filters out (`layer != 0`) — shows up with an
+  accurate frame in the raw AX walk. Geometry asserts are therefore
+  available to every overlay app.
+- **The wrapper responsibility covers Input Monitoring too.** chord's
+  status reply came back `input_monitoring_granted: true` unasked —
+  `sshd-keygen-wrapper` carries `kTCCServiceListenEvent` along with
+  Accessibility and Screen Recording. The vkey/HID class of feature
+  is verifiable without any new bake step.
+- **Config-proof by flipping the live file beats config-proof by
+  reading it back.** Three variants, all text-only: halo re-reads on
+  a 0.4 s mtime poll (sed the exclude list → overlay drops); perch's
+  `ax --dump` loads config per invocation (sed the roles → count
+  drops to zero); chord's daemon answers counts over the socket while
+  `config --show` names the bindings. A driver that only greps the
+  fixture it just installed proves the INSTALL, not the app.
+- **Calculator is the standard frontmost/hug target**: fixed-size,
+  dialog-free, zero grants, on every macOS. `open -a` re-parenting is
+  fine for the TARGET (it holds no grants) — only the app under test
+  must stay an SSH child.
+- **Third-party AX titles are not a contract.** Calculator's SwiftUI
+  buttons expose NO title through perch's label extraction (25
+  Buttons, all `<no title>`). When the assert reads someone else's
+  app, gate on structure (roles, counts, bundle id), never on their
+  label text.
 
 ### Still unproven
 
