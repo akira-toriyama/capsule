@@ -1,0 +1,48 @@
+# capsule profile: perch — the hint-overlay daemon (click anything by
+# keyboard). Fifth app on the rack. Like halo the pills are pure
+# pixels (no AX text of its own), but perch's CORE machinery is an AX
+# READER: `perch ax --dump` enumerates the frontmost app's labelable
+# elements through the same AXSource the overlay uses, and it loads
+# the config fresh on every invocation. The driver gates on that:
+# dump Calculator's buttons (pipeline-proof), flip the fixture's
+# [behavior].roles in the guest and dump again to zero (config-proof),
+# and round-trip `overlay --activate` through the daemon's DNC control
+# channel with the log as witness. Pixels stay the bonus tier.
+#
+# Style: taplo's default (one space around `=`, comments on their own
+# line). The fleet's taplo CI enforces it.
+
+name = "perch"
+repos = ["akira-toriyama/perch"]
+
+# The loop builds a DETACHED worktree of this repo at `branch` (under
+# ~/.tart/capsule-work/perch), never touching the live checkout.
+worktree = "/Volumes/workspace/github.com/akira-toriyama/perch"
+branch = "main"
+
+# main pins released tags only (sill 5.0.0, swift-toml-edit 2.3.1).
+patched-deps = []
+
+# Host build. package.sh does `swift build -c release`, assembles
+# Perch.app and signs with the persistent cert from .signing-id —
+# perch's keytap + AX walker are TCC-gated, and in the guest the grant
+# rides the sshd-keygen-wrapper responsibility as with wand and chord.
+signing = "./setup-signing-cert.sh"
+build = "./package.sh"
+app = "Perch.app"
+
+# The fixture is config, not product: perch reads exactly
+# ~/.config/perch/config.toml (no env-var override exists). ax --dump
+# re-reads it per invocation — the driver exploits the re-read.
+fixture = "fixtures/perch-hints.toml"
+fixture-dest = ".config/perch/config.toml"
+
+# PERCH_DEBUG mirrors /tmp/perch.log to stderr -> /tmp/capsule-app.log.
+launch-env = ["PERCH_DEBUG=1"]
+
+# The pills are pixels, so the screenshot is a real artifact here —
+# but still a bonus: the gates are the dump asserts + the DNC/log
+# round trip above.
+verify-tier = "screenshot"
+
+driver = "drivers/perch-hints.sh"

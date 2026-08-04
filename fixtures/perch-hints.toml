@@ -1,0 +1,45 @@
+# capsule gate fixture — perch hint-proof.
+#
+# Deterministic everything: no appear/match animations, no blur, no
+# sounds, auto-click off (Calculator has many buttons, but a unique
+# match must still never click by itself in a verify run).
+#
+# roles = ["Button"] is load-bearing twice over:
+#   - phase A: `ax --dump` over Calculator enumerates exactly the
+#     digit/operator buttons — labels "1"…"9" are the assert.
+#   - phase B: the driver seds this line to ["Slider"] IN THE GUEST
+#     (Calculator has none) and re-dumps; `found 0 labelable` can only
+#     come from perch re-reading THIS file at THIS path. Keep the
+#     array on one line — the sed matches this exact text.
+
+[hotkey]
+active = "shift+space"
+cancel = "esc"
+
+[labels]
+alphabet = "asdfjklgh"
+prioritise-center = true
+
+[overlay]
+theme = "system"
+accent = "system"
+pill-shape = "pill"
+font-size = 15
+blur-enabled = false
+anim-enabled = false
+shortcut-badge = true
+peek-key = "space"
+show-modifier-badge = "off"
+
+[overlay.effect]
+appear = "off"
+match = "off"
+unmatch = "off"
+narrow = "off"
+
+[exclude]
+apps = []
+
+[behavior]
+auto-click-on-unique = false
+roles = ["Button"]
