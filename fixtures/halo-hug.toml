@@ -1,0 +1,41 @@
+# capsule gate fixture — halo hug-proof.
+#
+# Static everything: no color cycling, no glow bloom, no pets, no
+# shake, no sound — the one moving part left is the hug itself, which
+# is the thing the driver measures. The driver later flips
+# [exclude].apps to ["com.apple.calculator"] IN THE GUEST to prove the
+# daemon live-reads this file (halo polls the mtime every 0.4 s), so
+# the `apps = []` line below is load-bearing: the sed that flips it
+# matches this exact text.
+#
+# shake = false also keeps halo off the AX APIs entirely — the hug
+# needs no TCC at all, which makes this profile the family's control
+# sample: a PASS with zero grants exercised.
+#
+# effect = "off" because an ACTIVE effect owns the ring's palette —
+# the first run used "neon" and drew BLUE, not this file's color
+# (BorderFX.sample: [border].color applies only when the effect frame
+# says .off). "off" is the one effect where the color knob IS the
+# ring, which keeps the bonus screenshot attributable to this fixture.
+
+[border]
+effect = "off"
+glow = false
+width = 6
+color = "#FF2D95"
+cycle-colors = false
+corner-radius = 10
+pad = 4
+min-size = 80
+
+[exclude]
+apps = []
+
+[shake]
+shake = false
+
+[sound]
+sound = ""
+
+[pets]
+line-pets = []
