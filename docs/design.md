@@ -84,9 +84,12 @@ missed it.
   ARM64]`). So auto-rebake is achievable *later*; it is not a reason
   against the repo. → *Corrects the prior "CI can't bake, so repo =
   recipe-not-auto-build", which was overstated.*
-- `packer` is **not installed** here (`brew install packer` needed).
-  Baking has never run; the Packer HCL in `packer/` is an unverified
-  DRAFT until the gate proves it.
+- Baking is **local-only, and proven**: `packer` (v1.15.4, re-measured
+  2026-08-04) runs `make bake` on the host — ~1 min packer build plus
+  the scripted consent, ~4 min end-to-end (§Bake result,
+  §Reproducibility). GitHub-hosted CI still cannot bake — that
+  judgment is unchanged; only the "never run / unverified DRAFT"
+  status is history.
 
 ### TCC grants + signing (the "human-zero" premise)
 - TCC's access check is the **csreq** code-signing-requirement blob =

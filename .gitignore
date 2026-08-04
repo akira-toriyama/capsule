@@ -1,8 +1,9 @@
 # Baked images live in ~/.tart and as local .tvm caches — never in git.
 *.tvm
 
-# Never commit signing material or keychains (the recipe GENERATES these
-# inside the VM; they must not leak into the repo).
+# Never commit signing material or keychains. (No step generates these
+# anymore — 40-signing-cert.sh was removed in t-4mp3 — but the patterns
+# stay as accident insurance for anything a future step drops here.)
 *.p12
 *.pem
 *.keychain

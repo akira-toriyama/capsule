@@ -84,7 +84,7 @@ is the live record from here on.
 | path | what |
 |---|---|
 | `packer/base.pkr.hcl` | recipe that bakes the shared core into an image |
-| `provision/` | provision steps (1024×768 display, TCC bake-by-consent, signing cert, optional CLT) |
+| `provision/` | provision steps (1024×768 display, TCC bake-by-consent, optional CLT) |
 | `helpers/click.swift` | middle-click via CGEvent — peekaboo has no middle button |
 | `helpers/ax-dump.swift` | raw AX-tree walker — peekaboo's inspect-ui is blind to SwiftUI subtrees |
 | `profiles/` | per-app manifests: what to build, what the guest needs, which driver |
