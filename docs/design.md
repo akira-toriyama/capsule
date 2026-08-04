@@ -463,6 +463,38 @@ theoretical fallback. It is also ~7 GB smaller than the 27 GB the OCI
 base occupies. `make import` overwrites `$(IMAGE)`; import under another
 name (`tart import x.tvm <other>`) when you want to keep the current one.
 
+### Bootstrapping a machine that has no `capsule-base` (2026-08-04)
+
+Two routes, and the canonical one is the recipe, not a parked blob:
+
+- **`make bake` is the canonical bootstrap** — self-contained and
+  human-zero end-to-end (§Bake result): packer builds headless, the
+  consent script drives the in-VM TCC UI over VNC, zero host windows,
+  zero prompts. A Claude session completes it alone. Prerequisites the
+  scripts themselves point to when missing: `packer` (brew, exempt from
+  the source-over-brew rule), vncdotool in `~/.tart/capsule-venv`, and
+  the one-time ~27 GB `macos-tahoe-vanilla` pull; after the pull the
+  bake is ~4 min. There is deliberately NO standing shared `.tvm` drop
+  — since the bake is human-zero, a parked 19 GiB file is just a stale
+  snapshot waiting to diverge from the recipe (§Image vs recipe).
+- **`.tvm` import is the fast path when a peer Mac already has the
+  image** — `make export` → move `capsule-base.tvm` (~18.8 GiB; AirDrop
+  / external disk / LAN scp, whatever is at hand) → `make import`.
+  **The `.tvm` alone is not enough**: the image's `authorized_keys`
+  holds only the pubkey of the machine that baked it
+  (`packer/base.pkr.hcl:98`), and `verify.sh` authenticates with the
+  local `~/.tart/capsule-ssh/id_ed25519` — so the baker's
+  `~/.tart/capsule-ssh/` must travel WITH the `.tvm`, or every SSH
+  stage dies against an image that does not trust this host. (Read
+  from the recipe; the 2026-08-03 round trip above was same-machine
+  and never exercised the cross-machine key mismatch.)
+
+`verify.sh` fails fast with both routes spelled out when the base
+image is absent — the old message said only "run 'make bake' first"
+and t-cc79 mis-read the Makefile's "one-time TCC consent" note as an
+interactive step, so the guard now names the doc section instead of
+re-abbreviating it.
+
 ## Adding an app — the three-file contract (proven with facet, 2026-08-04)
 
 An app joins the rack with exactly three files; nothing in `verify.sh`,

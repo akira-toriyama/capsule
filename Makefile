@@ -27,13 +27,13 @@ help:
 	@echo "  CAPSULE_KEEP=1     keep the clone running for post-mortem SSH"
 	@echo "  CAPSULE_NO_BUILD=1 reuse the last host build (fast driver iteration)"
 
-bake:            ## rare, local: recipe -> baked image (needs packer + one-time TCC consent)
+bake:            ## rare, local: recipe -> baked image, human-zero (packer + scripted VNC consent)
 	./bake.sh "$(BASE)" "$(IMAGE)"
 
 verify:          ## daily: run the acceptance loop for PROFILE against a fresh clone
 	./verify.sh "$(IMAGE)" "profiles/$(PROFILE).toml"
 
-export:          ## move the image as a registry-free .tvm (AirDrop / USB / shared drive)
+export:          ## registry-free .tvm — ship it WITH ~/.tart/capsule-ssh/ (image trusts only its baker)
 	tart export "$(IMAGE)" "$(IMAGE).tvm"
 
 import:
