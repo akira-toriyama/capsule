@@ -1,0 +1,25 @@
+# capsule gate fixture — chord daemon config-proof.
+#
+# Exactly TWO named bindings and zero fallbacks: chord's shipped
+# template loads 0 bindings (everything commented out by design), so
+# `query --loaded-bindings` answering bindings=2 / fallbacks=0 can only
+# come from THIS file. The names are the client-side half of the proof:
+# `chord config --show` prints them verbatim, and "capsule-alpha" /
+# "capsule-beta" exist nowhere else in the family.
+#
+# f13/f14 inputs cannot fire in the guest (nothing posts them), and
+# action-shell = "true" is a no-op even if one somehow did.
+
+[options]
+passthrough-unmatched = true
+exclude-apps = []
+
+[[bindings]]
+name = "capsule-alpha"
+input = "f13"
+action-shell = "true"
+
+[[bindings]]
+name = "capsule-beta"
+input = "f14"
+action-shell = "true"
