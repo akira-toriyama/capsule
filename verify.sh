@@ -47,6 +47,19 @@ need tart
 need yq "profiles are TOML and are parsed on the host"
 need jq "peekaboo's JSON is parsed on the host — the guest is toolchain-free"
 
+# Fail fast, and say HOW to get a base, not just that one is missing:
+# bake is human-zero (docs/design.md §Bake result), and the .tvm route
+# needs the baker's key dir too — both were mis-read as "interactive"
+# or "just the file" before this guard spelled them out (t-cc79).
+tart list 2>/dev/null | awk -v n="$BASE" '$2 == n {found=1} END {exit !found}' || {
+  echo "verify: base image '$BASE' not in the local tart store — two routes" >&2
+  echo "        (docs/design.md §Bootstrapping):" >&2
+  echo "        make bake    # human-zero, self-contained: packer + vncdotool," >&2
+  echo "                     # ~4 min after the one-time ~27 GB vanilla pull" >&2
+  echo "        make import  # peer Mac ran 'make export': move the ~19 GiB .tvm" >&2
+  echo "                     # AND its ~/.tart/capsule-ssh/ (image trusts only its baker)" >&2
+  exit 3; }
+
 say()  { echo "capsule: $*"; }
 fail() { echo "capsule: FAIL — $*" >&2; VERDICT=1; return 1; }
 
@@ -189,7 +202,11 @@ tart run "$VM" --no-graphics --dir="capsule:$STAGE:ro" >"$RUNLOG" 2>&1 &
 TART_PID=$!
 
 KEY="$HOME/.tart/capsule-ssh/id_ed25519"
-[ -f "$KEY" ] || { echo "verify: no capsule SSH key at $KEY — run 'make bake' first" >&2; exit 3; }
+[ -f "$KEY" ] || {
+  echo "verify: no capsule SSH key at $KEY — 'make bake' generates it; an" >&2
+  echo "        IMPORTED image trusts only its baker's key, so copy that" >&2
+  echo "        machine's ~/.tart/capsule-ssh/ here (docs/design.md §Bootstrapping)" >&2
+  exit 3; }
 SSH_OPTS=(-i "$KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
           -o LogLevel=ERROR -o ConnectTimeout=5)
 
