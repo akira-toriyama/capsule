@@ -48,6 +48,22 @@ PEEKABOO_BIN="$(command -v peekaboo)" || {
 }
 PEEKABOO_DIR="$(dirname "$(dirname "$(readlink -f "$PEEKABOO_BIN")")")"
 
+# The recipe PINS peekaboo: the bake ships whatever the host has, and
+# peekaboo IS the assert semantics (capture behavior, permission
+# checks, the see/inspect-ui contracts every driver and design.md
+# claim was measured against) — an unrelated `brew upgrade` must fail
+# the bake loudly, not silently change what PASS means. Bumping is a
+# deliberate act: update the pin, re-run `make verify` for every
+# profile, and re-read docs/design.md's peekaboo claims.
+PEEKABOO_PIN="3.9.4"
+PEEKABOO_VER="$("$PEEKABOO_BIN" --version 2>/dev/null | awk '{print $2; exit}')"
+[ "$PEEKABOO_VER" = "$PEEKABOO_PIN" ] || {
+  echo "bake: host peekaboo is '${PEEKABOO_VER:-unreadable}' but the recipe pins $PEEKABOO_PIN" >&2
+  echo "      install the pinned version, or bump PEEKABOO_PIN deliberately" >&2
+  echo "      (then re-verify every profile and re-read design.md's peekaboo claims)" >&2
+  exit 3
+}
+
 # Compile the guest helpers on the HOST (guest has no toolchain).
 mkdir -p .build
 swiftc -O -o .build/capsule-click helpers/click.swift
