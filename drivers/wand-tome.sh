@@ -40,10 +40,12 @@ drive() {
   click "$TOME_X" "$TOME_Y" middle
   sleep 2
 
-  # AX tier (the human-zero-forever signal). `see --app` cannot target
-  # the tome: it is a non-activating NSPanel at layer != 0, which
-  # peekaboo's window pipeline filters out — inspect-ui reads it fine.
-  ax_dump Wand tome-ax || { fail "inspect-ui --app Wand failed (see $ART/tome-ax.err)"; return 1; }
+  # AX tier (the human-zero-forever signal). ax_dump raw-walks the AX
+  # tree via capsule-ax-dump: peekaboo's `see --app` cannot target the
+  # tome (non-activating NSPanel, layer != 0, filtered out of its
+  # window pipeline), and its inspect-ui is blind to SwiftUI subtrees
+  # elsewhere in the family — one walker covers both.
+  ax_dump Wand tome-ax || { fail "capsule-ax-dump Wand failed (see $ART/tome-ax.err)"; return 1; }
 
   # Match the fixture's labels in the rendered element listing, not the
   # JSON shape: peekaboo's schema is not a contract, the fixture is.

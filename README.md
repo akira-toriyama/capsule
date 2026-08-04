@@ -23,7 +23,7 @@ disruption.**
 ```
 tart clone <base> <ephemeral>     # APFS copy-on-write — instant, ~0 disk
 tart run  --dir=product:…/.build:ro --dir=app:…/App.app:ro <ephemeral>
-  → drive with peekaboo (screenshot + AX) + helpers/click.swift (middle-click)
+  → drive with capsule-ax-dump (AX) + peekaboo (pixels) + capsule-click (middle-click)
   → screenshot / AX-read the result
 tart delete <ephemeral>           # reclaims only the delta
 ```
@@ -86,6 +86,7 @@ is the live record from here on.
 | `packer/base.pkr.hcl` | recipe that bakes the shared core into an image |
 | `provision/` | provision steps (1024×768 display, TCC bake-by-consent, signing cert, optional CLT) |
 | `helpers/click.swift` | middle-click via CGEvent — peekaboo has no middle button |
+| `helpers/ax-dump.swift` | raw AX-tree walker — peekaboo's inspect-ui is blind to SwiftUI subtrees |
 | `profiles/` | per-app manifests: what to build, what the guest needs, which driver |
 | `drivers/` | per-app drive+assert scripts; each defines `drive()` |
 | `fixtures/` | config fixtures for acceptance runs |
@@ -94,7 +95,7 @@ is the live record from here on.
 ## Requirements
 
 Host: `tart` 2.30+ on an Apple-silicon Mac (macOS 15+), `peekaboo`
-(screenshot + AX), `yq` + `jq` (profiles and peekaboo JSON are parsed
-host-side so the guest stays toolchain-free). Baking additionally needs
+(screenshots + permission checks), `yq` + `jq` (profiles and JSON are
+parsed host-side so the guest stays toolchain-free). Baking additionally needs
 `packer` and `vncdotool` + `pillow` in a venv at `~/.tart/capsule-venv`
 (override with `CAPSULE_VNCDO`).

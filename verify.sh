@@ -203,6 +203,7 @@ say "clone up at $IP"
 # --- guest helpers (the driver's whole vocabulary) ------------------
 PB="/Users/admin/peekaboo/bin/peekaboo"
 CLICK="/Users/admin/capsule-helpers/capsule-click"
+AXDUMP="/Users/admin/capsule-helpers/capsule-ax-dump"
 
 q() { local a out=""; for a in "$@"; do out+="$(printf '%q' "$a") "; done; printf '%s' "$out"; }
 # vm  — run an argv in the guest with host-side quoting preserved.
@@ -238,14 +239,17 @@ wait_proc() { # wait_proc <pattern> [tries]
 
 app_log() { vm cat /tmp/capsule-app.log 2>/dev/null || true; }
 
-# AX tier — `inspect-ui`, not `see`: peekaboo's window pipeline filters
-# out layer != 0 (non-activating NSPanels are invisible to `see --app`).
-# Writes the raw JSON *and* the rendered element listing; drivers assert
-# against the .txt, because the JSON escapes every quote in that listing
-# (grepping the JSON for a label silently never matches).
-ax_dump() { # ax_dump <app> <artifact-name> -> $ART/<name>.{json,txt}
-  pb inspect-ui --app "$1" --json >"$ART/$2.json" 2>"$ART/$2.err" || return 1
-  jq -r '.data.text // .text // ""' "$ART/$2.json" >"$ART/$2.txt" 2>/dev/null
+# AX tier — capsule's own walker, not peekaboo: `see --app` filters out
+# layer != 0 (non-activating NSPanels), and `inspect-ui` cannot descend
+# SwiftUI's accessibility containers — an NSHostingView subtree surfaces
+# as ONE opaque childless element (measured 2026-08-04 against facet's
+# SwiftUI tree; same failure class as prism, t-c4pv). capsule-ax-dump
+# (helpers/ax-dump.swift, baked into the image) walks the raw
+# AXUIElement tree and sees both AppKit and SwiftUI content. Drivers
+# assert on the .txt; text attributes are printed quoted, so
+# `grep '"Alpha"'` matches exactly the fixture's label.
+ax_dump() { # ax_dump <app> <artifact-name> -> $ART/<name>.txt
+  vm "$AXDUMP" "$1" >"$ART/$2.txt" 2>"$ART/$2.err" || return 1
   [ -s "$ART/$2.txt" ]
 }
 

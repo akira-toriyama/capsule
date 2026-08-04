@@ -48,6 +48,13 @@ variable "click_bin" {
   type = string
 }
 
+# Host path of the pre-compiled AX-tree walker (helpers/ax-dump.swift).
+# It replaces peekaboo for the AX tier: inspect-ui cannot descend
+# SwiftUI accessibility containers (measured 2026-08-04).
+variable "axdump_bin" {
+  type = string
+}
+
 source "tart-cli" "capsule" {
   vm_base_name = var.vm_base_name
   vm_name      = var.vm_name
@@ -79,13 +86,18 @@ build {
     destination = "/Users/admin/capsule-helpers/capsule-click"
   }
 
+  provisioner "file" {
+    source      = var.axdump_bin
+    destination = "/Users/admin/capsule-helpers/capsule-ax-dump"
+  }
+
   provisioner "shell" {
     environment_vars = ["CAPSULE_PUBKEY=${var.ssh_pubkey}"]
     inline = [
       "mkdir -p /Users/admin/.ssh",
       "grep -qF \"$CAPSULE_PUBKEY\" /Users/admin/.ssh/authorized_keys 2>/dev/null || echo \"$CAPSULE_PUBKEY\" >> /Users/admin/.ssh/authorized_keys",
       "chmod 700 /Users/admin/.ssh && chmod 600 /Users/admin/.ssh/authorized_keys",
-      "chmod +x /Users/admin/capsule-helpers/capsule-click /Users/admin/peekaboo/bin/peekaboo",
+      "chmod +x /Users/admin/capsule-helpers/capsule-click /Users/admin/capsule-helpers/capsule-ax-dump /Users/admin/peekaboo/bin/peekaboo",
     ]
   }
 
