@@ -163,7 +163,10 @@ cleanup() {
   if [ "${CAPSULE_KEEP:-}" = "1" ]; then
     say "CAPSULE_KEEP=1 — leaving $VM running (ssh -i ${KEY:-?} admin@${IP:-?})"
   else
-    kill "${TART_PID:-0}" 2>/dev/null || true
+    # Guard, don't default: the trap is armed before TART_PID is
+    # assigned, and `kill 0` would SIGTERM the caller's whole process
+    # group — make and the interactive shell included (t-gsen).
+    [ -n "${TART_PID:-}" ] && kill "$TART_PID" 2>/dev/null || true
     for _ in $(seq 1 20); do
       [ "$(vm_state)" = "running" ] || break
       sleep 1
@@ -190,14 +193,17 @@ KEY="$HOME/.tart/capsule-ssh/id_ed25519"
 SSH_OPTS=(-i "$KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
           -o LogLevel=ERROR -o ConnectTimeout=5)
 
-IP=""
+# The loop exits on IP + port 22 both up; the post-loop guard must
+# check the same fact — an IP with a closed port used to slip through
+# and fail later in the first ssh with a worse message (t-gsen).
+IP="" SSH_UP=""
 for _ in $(seq 1 60); do
   kill -0 "$TART_PID" 2>/dev/null || { echo "verify: tart run died — $RUNLOG" >&2; exit 1; }
   IP="$(tart ip "$VM" 2>/dev/null || true)"
-  [ -n "$IP" ] && nc -z -w 2 "$IP" 22 2>/dev/null && break
+  [ -n "$IP" ] && nc -z -w 2 "$IP" 22 2>/dev/null && { SSH_UP=1; break; }
   sleep 3
 done
-[ -n "$IP" ] || { echo "verify: $VM never became SSH-reachable — $RUNLOG" >&2; exit 1; }
+[ -n "$SSH_UP" ] || { echo "verify: $VM never became SSH-reachable — $RUNLOG" >&2; exit 1; }
 say "clone up at $IP"
 
 # --- guest helpers (the driver's whole vocabulary) ------------------
@@ -221,9 +227,13 @@ click() { vm "$CLICK" "$1" "$2" "${3:-middle}"; }
 # would lose the sshd-keygen-wrapper TCC responsibility that carries
 # the baked Accessibility grant.
 launch_app() {
-  local env_kv=() e
+  local env_kv=() e envq=""
   while IFS= read -r e; do [ -n "$e" ] && env_kv+=("$e"); done < <(pfa '.["launch-env"]')
-  vmsh "cd '$SHARE' && nohup env $(q "${env_kv[@]:-}") '$GUEST_APP/Contents/MacOS/$EXE' \
+  # No `env` prefix at all when the profile declares no launch-env: an
+  # empty array would otherwise quote to `env ''` and die rc=127 trying
+  # to exec an empty command name (t-gsen).
+  [ "${#env_kv[@]}" -gt 0 ] && envq="env $(q "${env_kv[@]}")"
+  vmsh "cd '$SHARE' && nohup $envq '$GUEST_APP/Contents/MacOS/$EXE' \
         >/tmp/capsule-app.log 2>&1 </dev/null & echo started"
 }
 
