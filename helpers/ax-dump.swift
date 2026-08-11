@@ -65,7 +65,13 @@ func frame(_ el: AXUIElement) -> String {
     var p = CGPoint.zero, s = CGSize.zero
     if let v = attr(el, kAXPositionAttribute) { AXValueGetValue(v as! AXValue, .cgPoint, &p) }
     if let v = attr(el, kAXSizeAttribute) { AXValueGetValue(v as! AXValue, .cgSize, &s) }
-    return "at (\(Int(p.x)),\(Int(p.y))) \(Int(s.width))x\(Int(s.height))"
+    // NaN-safe: an AX element can report a non-finite frame — SwiftUI's
+    // AXOpaqueProviderList does exactly that before its first layout pass —
+    // and `Int(CGFloat.nan)` TRAPS. The walker then died mid-dump with
+    // SIGTRAP and a driver read the empty file as "the app has no AX tree"
+    // (measured 2026-08-11 against facet's tree, twice).
+    let f = { (v: CGFloat) -> String in v.isFinite ? String(Int(v)) : "NaN" }
+    return "at (\(f(p.x)),\(f(p.y))) \(f(s.width))x\(f(s.height))"
 }
 
 // Runaway guards, not tuning knobs: a verify-sized panel is tens of

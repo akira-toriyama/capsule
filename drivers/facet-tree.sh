@@ -27,8 +27,15 @@ drive() {
   sleep 3
   app_log >"$ART/app.log"
 
-  # Client mode posts over the DNC and exits 0 even with no listener,
-  # so the summon itself proves nothing — the AX assert below does.
+  # Client mode posts over the DNC and exits 0 even with no listener, so
+  # the summon itself proves nothing — the AX assert below does. It is
+  # also FIRE-AND-FORGET: a post that lands before the server has
+  # registered its observer is dropped on the floor with no error, and a
+  # loaded host makes that window wide (measured 2026-08-11: a run whose
+  # app.log carried no `dnc cmd=view:tree` line at all, so the tree was
+  # never asked to open — the assert then blamed rendering). `--view` is
+  # documented idempotent, so the poll below re-sends it each round
+  # rather than trusting the first one.
   vm "$GUEST_APP/Contents/MacOS/facet" --view tree
 
   # AX tier (the human-zero-forever signal). ax_dump walks the raw AX
@@ -44,6 +51,7 @@ drive() {
     sleep 2
     ax_dump facet tree-ax || continue
     grep -qi "Alpha" "$ART/tree-ax.txt" && { ok=1; break; }
+    vm "$GUEST_APP/Contents/MacOS/facet" --view tree   # idempotent re-summon
   done
   if [ -z "$ok" ]; then
     app_log >"$ART/app.log"
