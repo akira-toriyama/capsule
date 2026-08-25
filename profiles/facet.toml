@@ -13,13 +13,12 @@ repos = ["akira-toriyama/facet"]
 # ~/.tart/capsule-work/facet), so it never checks out a branch in the
 # tree a human or another session has open.
 #
-# NOT `main`: main's tree is one custom-drawn NSView (SidebarView+Draw)
-# with ZERO row AX — inspect-ui sees a single opaque element (measured
-# 2026-08-04), so the AX tier cannot assert anything there. The SwiftUI
-# render swap (PR #448) is what makes the tree AX-readable, and it is
-# also the surface t-eedb actually needs verified.
+# `main` again since 2026-08-25: the SwiftUI tree render swap (PR #448)
+# and the grid migration (PR #456) are both merged, so main is the
+# AX-readable surface. Point `branch` at a feature branch only while
+# verifying an unmerged facet PR.
 worktree = "/Volumes/workspace/github.com/akira-toriyama/facet"
-branch = "feat/swiftui-tree-render-swap"
+branch = "main"
 
 # facet's main pins released deps — no local overrides needed.
 patched-deps = []
