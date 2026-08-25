@@ -13,10 +13,10 @@ repos = ["akira-toriyama/facet"]
 # ~/.tart/capsule-work/facet), so it never checks out a branch in the
 # tree a human or another session has open.
 #
-# `main` again since 2026-08-25: the SwiftUI tree render swap (PR #448)
-# and the grid migration (PR #456) are both merged, so main is the
-# AX-readable surface. Point `branch` at a feature branch only while
-# verifying an unmerged facet PR.
+# `main` again since 2026-08-25: the SwiftUI tree (#448), grid (#456)
+# and rail (#457) migrations are all merged, so main is the AX-readable
+# surface. Point `branch` at a feature branch only while verifying an
+# unmerged facet PR.
 worktree = "/Volumes/workspace/github.com/akira-toriyama/facet"
 branch = "main"
 
