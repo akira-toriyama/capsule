@@ -1,0 +1,29 @@
+# capsule profile: facet — by-workspace degrade tree, header-drag escape band.
+# `make verify PROFILE=facet-degrade`, or with the drag phase:
+# `DEGRADE_PHASE=drag make verify PROFILE=facet-degrade`.
+#
+# Style: taplo's default (one space around `=`, comments on their own line).
+
+name = "facet-degrade"
+repos = ["akira-toriyama/facet"]
+
+worktree = "/Volumes/workspace/github.com/akira-toriyama/facet"
+branch = "main"
+
+patched-deps = []
+
+signing = "./setup-signing-cert.sh --silent"
+build = "./package.sh"
+app = "Facet.app"
+
+# The fixture's whole content is what it omits — no `[desktop.N]` table, so
+# the tree falls back to the by-workspace degrade, the one render mode whose
+# header drag reaches `resolveTreeDrop`'s `!sectionMode` swap branch.
+fixture = "fixtures/facet-degrade.toml"
+fixture-dest = ".config/facet/config.toml"
+
+launch-env = ["FACET_DEBUG=1"]
+
+verify-tier = "screenshot"
+
+driver = "drivers/facet-degrade.sh"
