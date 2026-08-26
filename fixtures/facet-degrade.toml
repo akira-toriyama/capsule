@@ -1,0 +1,25 @@
+# capsule fixture — facet tree in the BY-WORKSPACE DEGRADE render mode.
+#
+# The point of this fixture is what it does NOT declare. `DesktopRenderMode`
+# is `.degrade` exactly when a workspace desktop authors no
+# `[[desktop.N.section]]` cell, and the tree then renders
+# `defaultWorkspaceCount` (5) unnamed workspace slots instead of a projection.
+# That mode is the ONLY one where a tree header drag resolves through
+# `resolveTreeDrop`'s `!sectionMode` swap branch — the branch whose
+# above-the-first-header escape band is unverified (projects t-dc2w).
+#
+# So: no `[desktop.N]` table at all. Declaring one WITHOUT a section would
+# make facet opt-in and manage nothing; leaving the whole desktop vocabulary
+# out is the documented zero-config default (every mac desktop gets 5 unnamed
+# workspaces), which is the state under test.
+#
+# Everything else is pinned for determinism: a static theme, no border effect
+# (an animated stroke changes pixels between the before/after snapshots), and
+# no `[config]` auto-persistence (the fixture must be the single source of
+# what the run verifies).
+
+[theme]
+name = "terminal"
+
+[border]
+effect = "off"
