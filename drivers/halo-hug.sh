@@ -9,7 +9,9 @@
 # halo draws its ring with Core Graphics — no AX text exists anywhere
 # in the app — but the overlay is a real NSWindow whose FRAME is
 # deterministic: the hugged window's rect expanded by glowPad = 24 pt
-# per side (a compile-time constant, Border.swift:19/:163). Two gates:
+# per side (a compile-time constant — `RingGeometry.glowPad`, applied by
+# `RingGeometry.overlayFrame(hugging:screenHeight:)` in
+# HaloCore/RingGeometry.swift). Two gates:
 #   1. hug-proof     — overlay frame == Calculator frame + 48 in both
 #      dimensions. Calculator is the hug target: fixed-size,
 #      dialog-free, present on every macOS.
@@ -35,26 +37,17 @@ drive() {
   wait_proc "Calculator" || { fail "Calculator never started"; return 1; }
   sleep 2
 
-  launch_app >/dev/null
-  wait_proc "/Contents/MacOS/halo" || {
-    app_log >"$ART/app.log"
-    fail "halo did not start (see $ART/app.log)"
-    return 1
-  }
+  launch_and_wait "/Contents/MacOS/halo" "halo" || return 1
 
   # SkyLight subscription + first update tick; poll for the overlay
   # window rather than trusting one fixed sleep.
-  local ok="" cw ch hw hh
-  for _ in $(seq 1 10); do
-    sleep 2
-    ax_dump halo halo-ax || continue
-    grep -q '^ *AXWindow' "$ART/halo-ax.txt" && { ok=1; break; }
-  done
-  app_log >"$ART/app.log"
-  if [ -z "$ok" ]; then
+  local cw ch hw hh
+  if ! ax_wait halo halo-ax 10 '^ *AXWindow'; then
+    app_log >"$ART/app.log"
     fail "halo never showed its overlay window (see $ART/halo-ax.txt, $ART/app.log)"
     return 1
   fi
+  app_log >"$ART/app.log"
 
   ax_dump Calculator calc-ax || {
     fail "capsule-ax-dump Calculator failed (see $ART/calc-ax.err)"
@@ -73,23 +66,16 @@ drive() {
   fi
   say "overlay hugs Calculator — ${cw}x${ch} ringed at ${hw}x${hh} (+48/+48)"
 
-  # Pixel tier first, while the ring is still up: a bonus, never the gate.
-  snap halo-hug && say "captured $ART/halo-hug.png" \
-                || say "screenshot unavailable (bonus tier — not a failure)"
+  # Pixel tier first, while the ring is still up.
+  snap_bonus halo-hug
 
   # Hot-reload config-proof: exclude Calculator in the guest copy; the
   # 0.4 s mtime poll must order the overlay out.
   vmsh 'sed -i "" "s/^apps = \[\]/apps = [\"com.apple.calculator\"]/" ~/.config/halo/config.toml'
-  ok=""
-  for _ in $(seq 1 5); do
-    sleep 2
-    ax_dump halo halo-ax-excluded || continue
-    grep -q '^ *AXWindow' "$ART/halo-ax-excluded.txt" || { ok=1; break; }
-  done
-  if [ -z "$ok" ]; then
+  ax_wait halo halo-ax-excluded 5 ! '^ *AXWindow' || {
     fail "overlay survived the exclude edit — halo is not reading the fixture path (see $ART/halo-ax-excluded.txt)"
     return 1
-  fi
+  }
   say "exclude edit dropped the overlay — halo live-reads the fixture"
 
   vm pkill -f "/Contents/MacOS/halo" >/dev/null 2>&1 || true

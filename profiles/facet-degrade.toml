@@ -5,7 +5,6 @@
 # Style: taplo's default (one space around `=`, comments on their own line).
 
 name = "facet-degrade"
-repos = ["akira-toriyama/facet"]
 
 worktree = "/Volumes/workspace/github.com/akira-toriyama/facet"
 branch = "main"

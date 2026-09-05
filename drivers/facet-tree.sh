@@ -5,8 +5,8 @@
 # the host-signed Facet.app read-only, and installed
 # fixtures/facet-tree.toml as the guest's ~/.config/facet/config.toml.
 # Everything below runs on the HOST and reaches the guest through
-# verify.sh's helpers (vm, vmsh, pb, ax_dump, snap, launch_app,
-# wait_proc, app_log, fail, say).
+# verify.sh's helpers (vm, vmsh, pb, launch_and_wait, ax_wait,
+# assert_labels, snap_bonus, app_log, fail, say).
 #
 # facet is a two-mode binary: no args = SERVER (agent-only, no panel),
 # any recognised flag = CLIENT (posts a DistributedNotificationCenter
@@ -16,12 +16,7 @@
 # shared binary.
 
 drive() {
-  launch_app >/dev/null
-  wait_proc "/Contents/MacOS/facet" || {
-    app_log >"$ART/app.log"
-    fail "facet server did not start (see $ART/app.log)"
-    return 1
-  }
+  launch_and_wait "/Contents/MacOS/facet" "facet server" || return 1
   # Let the server finish its first catalog build (config parse, AX
   # window adoption) before summoning a view.
   sleep 3
@@ -34,24 +29,19 @@ drive() {
   # loaded host makes that window wide (measured 2026-08-11: a run whose
   # app.log carried no `dnc cmd=view:tree` line at all, so the tree was
   # never asked to open — the assert then blamed rendering). `--view` is
-  # documented idempotent, so the poll below re-sends it each round
-  # rather than trusting the first one.
-  vm "$GUEST_APP/Contents/MacOS/facet" --view tree
-
-  # AX tier (the human-zero-forever signal). ax_dump walks the raw AX
+  # documented idempotent, so the poll re-sends it each round rather
+  # than trusting the first one.
+  #
+  # AX tier (the human-zero-forever signal). ax_wait walks the raw AX
   # tree via capsule-ax-dump — peekaboo's inspect-ui shows the SwiftUI
   # tree as ONE opaque childless element (the reason the helper exists;
   # see helpers/ax-dump.swift). The workspace rows surface as AXHeading
   # desc="WORKSPACE · ALPHA" — the label is small-caps-styled, so the
   # asserts match case-insensitively rather than encoding the styling.
-  # First summon after boot can lag a beat, so poll for the label
-  # instead of trusting one fixed sleep.
   local ok=""
   for _ in $(seq 1 10); do
-    sleep 2
-    ax_dump facet tree-ax || continue
-    grep -qi "Alpha" "$ART/tree-ax.txt" && { ok=1; break; }
-    vm "$GUEST_APP/Contents/MacOS/facet" --view tree   # idempotent re-summon
+    vm "$GUEST_APP/Contents/MacOS/facet" --view tree
+    ax_wait facet tree-ax 1 -i "Alpha" && { ok=1; break; }
   done
   if [ -z "$ok" ]; then
     app_log >"$ART/app.log"
@@ -61,20 +51,11 @@ drive() {
 
   # Both fixture labels, not just the poll sentinel: one label present
   # + one missing would mean facet loaded SOME config but not ours.
-  local missing=()
-  for label in Alpha Beta; do
-    grep -qi "$label" "$ART/tree-ax.txt" || missing+=("$label")
-  done
-  if [ "${#missing[@]}" -gt 0 ]; then
-    fail "tree is missing fixture workspaces: ${missing[*]} (see $ART/tree-ax.txt)"
-    return 1
-  fi
+  assert_labels -i "$ART/tree-ax.txt" "tree is missing fixture workspaces" \
+    Alpha Beta || return 1
   say "tree open — AX lists workspaces Alpha / Beta"
 
-  # Pixel tier: a bonus. Screen Recording re-confirms ~monthly, so a
-  # missing screenshot must never fail a run that AX already proved.
-  snap facet-tree && say "captured $ART/facet-tree.png" \
-                  || say "screenshot unavailable (bonus tier — not a failure)"
+  snap_bonus facet-tree
 
   vm pkill -f "/Contents/MacOS/facet" >/dev/null 2>&1 || true
   return 0

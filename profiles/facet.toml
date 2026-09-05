@@ -7,7 +7,6 @@
 # and an aligned block with trailing comments crashes the formatter.
 
 name = "facet"
-repos = ["akira-toriyama/facet"]
 
 # The loop builds a DETACHED worktree of this repo at `branch` (under
 # ~/.tart/capsule-work/facet), so it never checks out a branch in the
