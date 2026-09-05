@@ -11,10 +11,7 @@
 # must be the single source of what the run verifies, so facet must
 # never promote a snapshot over it.
 #
-# STATUS: VERIFIED — `make verify PROFILE=facet` drives this fixture in
-# a fresh clone and asserts both workspace headings in the AX tree
-# (2026-08-04, against a base re-baked the same day with capsule-ax-dump;
-# wand re-verified green on the same base).
+# Shared by the tree, grid and rail profiles: one config, three views.
 
 [[desktop.1.section]]
 label = "Alpha"
