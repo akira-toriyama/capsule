@@ -594,6 +594,36 @@ Facts the batch measured, each a first data point:
   app, gate on structure (roles, counts, bundle id), never on their
   label text.
 
+Facts the facet grid / rail / isolate batch measured (2026-09-05,
+`facet-grid` / `facet-rail` / `facet-isolate`, each PASS in a fresh
+clone against facet `main` 4880c12):
+
+- **One server, three views, three profiles.** The same
+  `fixtures/facet-tree.toml` serves the tree, grid and rail gates; only
+  the client-mode summon (`--view grid` / `--view rail`) and the label
+  shape differ. The grid and rail name cells `index (label)`
+  (`"1 (Alpha)"`) where the tree writes `WORKSPACE · ALPHA` headings,
+  and the grid's cells sit under an `AXOpaqueProviderGrid` container —
+  so a driver can tell WHICH view answered without reading window
+  titles.
+- **The rail's wrap ghost is real in AX.** With an even workspace count
+  and every cell shown, the far-left cell is drawn again at the far
+  right (RailMath "both-ends peek symmetry"), so the two-workspace
+  fixture lists `"2 (Beta)"` twice. Rail asserts gate on presence,
+  never on count.
+- **A refusal is a log fact, not an exit code.** `facet --view grid`
+  on an isolate desktop exits 0 (client mode always does) and the
+  server logs `error: grid view is not available on an isolate
+  desktop (tree only)`; the tree keeps rendering the synthesized
+  section as `MATCHED · <label>`. `facet-isolate` gates on the two log
+  lines plus the absence of any `index (label)` cell afterwards.
+- **A full-screen near-black overlay composites to ~85 KB at
+  1024x768** — below the 100 KB "composited" floor `snap` had used, so
+  the grid / rail screenshots were reported as uncomposited splash
+  after 12 retries while being the real frame. The floor is now 50 KB
+  (splash measured 22 KB); a future overlay darker than that would
+  again cost only the bonus artifact, never a verdict.
+
 ### Still unproven
 
 - ~~The recipe does not pin peekaboo~~ — closed 2026-08-04 (t-qahk):

@@ -1,23 +1,23 @@
-# capsule profile: facet — the second app on the rack, proving the
-# "adding an app = profile + driver + fixture" claim (projects/t-3jxz).
-# `make verify PROFILE=facet`.
+# capsule profile: facet — the isolate-desktop gate. `make verify
+# PROFILE=facet-isolate`. An isolate desktop has no fixed thumbnail, so
+# facet refuses `--view grid` / `--view rail` there LOUDLY (tree only);
+# this profile pins that refusal, plus the tree still rendering, as the
+# machine-side half of "everything that worked before the migration still
+# works" (facet t-2p32).
 #
 # Style: taplo's default (one space around `=`, comments on their own
-# line). The fleet's taplo CI enforces it — aligned `=` fails the check,
-# and an aligned block with trailing comments crashes the formatter.
+# line). The fleet's taplo CI enforces it.
 
-name = "facet"
+name = "facet-isolate"
 
 # The loop builds a DETACHED worktree of this repo at `branch` (under
-# ~/.tart/capsule-work/facet), so it never checks out a branch in the
+# ~/.tart/capsule-work/facet-isolate), so it never checks out a branch in the
 # tree a human or another session has open.
 #
 # `main` again since 2026-08-25: the SwiftUI tree (#448), grid (#456)
 # and rail (#457) migrations are all merged, so main is the AX-readable
-# surface. This profile gates the tree; facet-grid.toml / facet-rail.toml
-# gate the other two views and facet-isolate.toml the isolate refusal.
-# Point `branch` at a feature branch only while verifying an unmerged
-# facet PR.
+# surface. Point `branch` at a feature branch only while verifying an
+# unmerged facet PR.
 worktree = "/Volumes/workspace/github.com/akira-toriyama/facet"
 branch = "main"
 
@@ -33,9 +33,9 @@ signing = "./setup-signing-cert.sh --silent"
 build = "./package.sh"
 app = "Facet.app"
 
-# The fixture is config, not product: facet reads exactly one path in
-# the guest HOME (the shared bundle is read-only).
-fixture = "fixtures/facet-tree.toml"
+# The fixture types desktop 1 as an isolate desktop; the driver's gate is
+# what facet REFUSES on it, so the tree fixture cannot serve here.
+fixture = "fixtures/facet-isolate.toml"
 fixture-dest = ".config/facet/config.toml"
 
 # FACET_DEBUG routes Log.debug to stderr -> /tmp/capsule-app.log, which
@@ -46,4 +46,4 @@ launch-env = ["FACET_DEBUG=1"]
 # artifact (Screen Recording re-confirms ~monthly on Tahoe).
 verify-tier = "screenshot"
 
-driver = "drivers/facet-tree.sh"
+driver = "drivers/facet-isolate.sh"

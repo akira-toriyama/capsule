@@ -1,0 +1,20 @@
+# capsule gate fixture — facet ISOLATE desktop.
+#
+# Desktop 1 (the VM's only mac desktop) is typed `isolate`: an always-on
+# match-driven desktop with no sections and no sub-workspaces. facet
+# refuses `--view grid` / `--view rail` on it (no fixed thumbnail to draw,
+# tree only) — the refusal is the gate, so the fixture must make desktop 1
+# unmistakably an isolate desktop. `match` is REQUIRED: an isolate table
+# without one is schema-perfect and discarded whole, which would silently
+# turn this run into the zero-config default and the refusal would never
+# fire. `label` names the synthesized section so the tree's AX dump can
+# prove THIS config loaded, not any default.
+#
+# [config] auto-persistence is deliberately absent (off): the fixture is
+# the single source of what the run verifies.
+
+[desktop.1]
+type = "isolate"
+label = "Isolate"
+match = 'app~=TextEdit'
+layout = "bsp"

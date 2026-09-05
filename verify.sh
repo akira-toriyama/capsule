@@ -289,10 +289,12 @@ ax_dump() { # ax_dump <app> <artifact-name> -> $ART/<name>.txt
 # A fresh clone answers AX ~25 s before it composites a desktop, and an
 # idle framebuffer keeps serving the BOOT SPLASH to a capture that
 # otherwise looks successful (measured 2026-08-03: 22 KB splash vs
-# >150 KB composited, at the pinned 1024x768). Retry until the frame is
-# a composited one; a still-uncomposited frame costs a bonus artifact,
-# never a false PASS.
-SNAP_MIN_BYTES=100000
+# >150 KB composited desktop, at the pinned 1024x768; 2026-09-05: a
+# full-screen near-black overlay — facet's grid / rail — composites to
+# 84-85 KB, so the floor sits between the splash and that). Retry until
+# the frame is a composited one; a still-uncomposited frame costs a
+# bonus artifact, never a false PASS.
+SNAP_MIN_BYTES=50000
 snap() { # snap <artifact-name>
   [ "$TIER" = "screenshot" ] || { say "snap $1 skipped (verify-tier=$TIER)"; return 0; }
   local size=0
