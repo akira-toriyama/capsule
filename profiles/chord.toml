@@ -12,7 +12,6 @@
 # line). The fleet's taplo CI enforces it.
 
 name = "chord"
-repos = ["akira-toriyama/chord"]
 
 # The loop builds a DETACHED worktree of this repo at `branch` (under
 # ~/.tart/capsule-work/chord), never touching the live checkout.

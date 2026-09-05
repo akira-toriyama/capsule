@@ -10,10 +10,8 @@
 *.keychain-db
 .signing-id
 
-# Compiled helpers (built on the HOST by bake.sh — the guest is
-# toolchain-free).
-helpers/click
-helpers/*.o
+# Compiled helpers (bake.sh builds helpers/*.swift on the HOST into
+# .build/ — the guest is toolchain-free).
 .build/
 
 # Screenshots / AX dumps captured during a verify run.

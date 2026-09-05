@@ -5,13 +5,11 @@
 # the host-signed Wand.app read-only, and installed fixtures/wand-tome.toml
 # as the guest's ~/.config/wand/config.toml. Everything below runs on the
 # HOST and reaches the guest through verify.sh's helpers (vm, pb, click,
-# ax_dump, snap, launch_app, wait_proc, app_log, fail, say).
+# launch_and_wait, ax_dump, assert_labels, snap_bonus, app_log, fail, say).
 #
 # This is the ENV-PROOF: it re-runs the 2026-08-03 bring-up gate through
 # the automated loop — middle-click opens the tome, the AX tree lists the
-# fixture rows. The t-k4hf delete acceptance (right-click a row → Delete →
-# prune / dismiss / neon / line-pets) extends this driver; it is not here
-# yet because it needs the unpushed wand branch.
+# fixture rows.
 
 # The tome anchors on the cursor, and the fixture uses apps = ["*"], so
 # the middle of the deterministic 1024x768 display is a valid anchor.
@@ -19,12 +17,7 @@ TOME_X=512
 TOME_Y=384
 
 drive() {
-  launch_app >/dev/null
-  wait_proc "/Contents/MacOS/wand" || {
-    app_log >"$ART/app.log"
-    fail "wand did not start (see $ART/app.log)"
-    return 1
-  }
+  launch_and_wait "/Contents/MacOS/wand" "wand" || return 1
   # The daemon installs its event tap during startup; give it a beat and
   # then read the log rather than guessing from a fixed sleep.
   sleep 3
@@ -49,20 +42,11 @@ drive() {
 
   # Match the fixture's labels in the rendered element listing, not the
   # JSON shape: peekaboo's schema is not a contract, the fixture is.
-  local missing=()
-  for row in Alpha Beta Sort; do
-    grep -q "\"$row\"" "$ART/tome-ax.txt" || missing+=("$row")
-  done
-  if [ "${#missing[@]}" -gt 0 ]; then
-    fail "tome panel is missing fixture rows: ${missing[*]} (see $ART/tome-ax.txt)"
-    return 1
-  fi
+  assert_labels "$ART/tome-ax.txt" "tome panel is missing fixture rows" \
+    '"Alpha"' '"Beta"' '"Sort"' || return 1
   say "tome panel open — AX lists Alpha / Beta / Sort"
 
-  # Pixel tier: a bonus. Screen Recording re-confirms ~monthly, so a
-  # missing screenshot must never fail a run that AX already proved.
-  snap tome-panel && say "captured $ART/tome-panel.png" \
-                  || say "screenshot unavailable (bonus tier — not a failure)"
+  snap_bonus tome-panel
 
   vm pkill -f "/Contents/MacOS/wand" >/dev/null 2>&1 || true
   return 0

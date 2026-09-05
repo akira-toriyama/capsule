@@ -36,24 +36,18 @@ seed_windows() {
   sleep 3
 }
 
+# summon_tree <artifact-name> — `--view tree` is fire-and-forget over the
+# DNC, so re-send it each round rather than trusting the first post.
 summon_tree() {
-  local ok=""
   for _ in $(seq 1 10); do
     vm "$GUEST_APP/Contents/MacOS/facet" --view tree
-    sleep 2
-    ax_dump facet "$1" || continue
-    grep -qi "workspace" "$ART/$1.txt" && { ok=1; break; }
+    ax_wait facet "$1" 1 -i "workspace" && return 0
   done
-  [ -n "$ok" ]
+  return 1
 }
 
 drive() {
-  launch_app >/dev/null
-  wait_proc "/Contents/MacOS/facet" || {
-    app_log >"$ART/app.log"
-    fail "facet server did not start (see $ART/app.log)"
-    return 1
-  }
+  launch_and_wait "/Contents/MacOS/facet" "facet server" || return 1
   sleep 3
 
   seed_windows
@@ -76,9 +70,7 @@ drive() {
     return 1
   }
   app_log >"$ART/app.log"
-  snap facet-degrade-before \
-    && say "captured $ART/facet-degrade-before.png" \
-    || say "screenshot unavailable (bonus tier — not a failure)"
+  snap_bonus facet-degrade-before
 
   say "probe: tree rendered in degrade mode — geometry in $ART/tree-ax-before.txt"
   [ "$PHASE" = "probe" ] && return 0
@@ -127,9 +119,7 @@ drive() {
     return 1
   }
   app_log >"$ART/app-after.log"
-  snap facet-degrade-after \
-    && say "captured $ART/facet-degrade-after.png" \
-    || say "screenshot unavailable (bonus tier — not a failure)"
+  snap_bonus facet-degrade-after
 
   # The verdict is membership, not pixels: a committed swap moves the seeded
   # TextEdit rows from one workspace heading to the other. Report BOTH dumps

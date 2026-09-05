@@ -4,16 +4,16 @@
 # TEXT to assert (design.md's rule of thumb: custom-drawn =
 # screenshot-only... for CONTENT). What IS machine-readable is the
 # overlay window's GEOMETRY: halo hugs the frontmost window at exactly
-# +24 pt per side (glowPad, a compile-time constant — Border.swift:19),
-# and it live-polls its config every 0.4 s. The driver gates on both:
-# frame math proves the hug, a hot-reload exclude proves the daemon is
-# reading OUR config file. Pixels stay the bonus tier.
+# +24 pt per side (`RingGeometry.glowPad`, a compile-time constant in
+# HaloCore/RingGeometry.swift), and it live-polls its config every
+# 0.4 s. The driver gates on both: frame math proves the hug, a
+# hot-reload exclude proves the daemon is reading OUR config file.
+# Pixels stay the bonus tier.
 #
 # Style: taplo's default (one space around `=`, comments on their own
 # line). The fleet's taplo CI enforces it.
 
 name = "halo"
-repos = ["akira-toriyama/halo"]
 
 # The loop builds a DETACHED worktree of this repo at `branch` (under
 # ~/.tart/capsule-work/halo), never touching the live checkout.

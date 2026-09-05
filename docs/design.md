@@ -329,7 +329,10 @@ base baked the same day by `make bake`.
 | assert | host | AX tier gates; pixels are a bonus artifact |
 
 The **driver runs on the host** and reaches into the guest through
-`vm` / `pb` / `click` / `ax_dump` / `snap`. That keeps the guest
+`vm` / `pb` / `click` / `ax_dump` / `snap`, and through the composed
+helpers every driver shares — `launch_and_wait` / `ax_wait` /
+`assert_labels` / `snap_bonus` (2026-09-05: the same four blocks had
+been re-implemented in up to seven drivers). That keeps the guest
 toolchain-free (JSON is parsed here) and keeps a driver readable as a
 sequence of intentions rather than SSH quoting.
 
@@ -505,7 +508,7 @@ app" claim from design into measurement.
 | file | role | copy from wand, then change |
 |---|---|---|
 | `profiles/<app>.toml` | the per-app variable surface | `worktree`/`branch` → the app repo + ref; `app` → its bundle name; `signing`/`build` → its cert + package scripts; `fixture-dest` → the config path the app reads; `launch-env` → its debug env var |
-| `drivers/<app>-<x>.sh` | `drive()` = launch, poke, assert | the poke (wand: middle-click; facet: a client-mode `--view tree` invocation of the same binary) and the AX assert (the fixture's labels) |
+| `drivers/<app>-<x>.sh` | `drive()` = `launch_and_wait`, poke, `ax_wait` + `assert_labels`, `snap_bonus` | the poke (wand: middle-click; facet: a client-mode `--view tree` invocation of the same binary) and the AX assert (the fixture's labels); everything else is the shared helpers, never a per-driver copy |
 | `fixtures/<app>-<x>.toml` | a COMPLETE app config making the GUI deterministic | declare named, unmistakable content (facet: two labeled workspaces) so the assert proves *this* config rendered, not any default |
 
 What generalized without change: the detached-worktree host build, the

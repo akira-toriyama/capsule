@@ -24,7 +24,10 @@
 #   5. drive      — profiles/<x>.toml names a drivers/<x>.sh that gets
 #      sourced and must define `drive`; it runs on the HOST and talks
 #      to the guest through the helpers below (guest stays
-#      toolchain-free — JSON is parsed here, not there)
+#      toolchain-free — JSON is parsed here, not there). A driver keeps
+#      only the app-specific proof; the launch/poll/assert/snap steps
+#      every driver shares are the composed helpers (launch_and_wait,
+#      ax_wait, assert_labels, snap_bonus), never re-implemented per app
 #   6. verdict    — artifacts/<name>/ holds every capture; the clone is
 #      destroyed either way
 #
@@ -186,7 +189,7 @@ cleanup() {
     done
     tart delete "$VM" 2>/dev/null || true
   fi
-  exit $rc
+  exit "$rc"
 }
 vm_state() { tart list 2>/dev/null | awk -v n="$VM" '$2 == n {print $NF}'; }
 
@@ -302,6 +305,58 @@ snap() { # snap <artifact-name>
   done
   say "snap $1: framebuffer still uncomposited (${size}B) — keeping it anyway"
   [ "$size" -gt 0 ]
+}
+
+# --- composed helpers (the steps every driver shares) ----------------
+# launch_and_wait <pgrep-pattern> <label> — launch the profile's bundle
+# and wait for its process; on a miss the app log is kept and the run
+# fails as "<label> did not start".
+launch_and_wait() {
+  launch_app >/dev/null
+  wait_proc "$1" || {
+    app_log >"$ART/app.log"
+    fail "$2 did not start (see $ART/app.log)"
+    return 1
+  }
+}
+
+# ax_wait <app> <artifact-name> <tries> [!] <grep-arg…> — poll ax_dump
+# every 2 s until $ART/<name>.txt satisfies `grep -q <grep-arg…>`
+# (a leading `!` waits for the pattern to be ABSENT instead). The last
+# dump stays in $ART either way, so a failing driver can point at it.
+ax_wait() {
+  local app="$1" name="$2" tries="$3" want=0 hit; shift 3
+  [ "${1:-}" = "!" ] && { want=1; shift; }
+  for _ in $(seq 1 "$tries"); do
+    sleep 2
+    ax_dump "$app" "$name" || continue
+    hit=1
+    grep -q "$@" "$ART/$name.txt" && hit=0
+    [ "$hit" = "$want" ] && return 0
+  done
+  return 1
+}
+
+# assert_labels [-i] <file> <what> <pattern…> — every pattern must match
+# a line of <file> (grep BRE; `-i` for case-insensitive); the ones that
+# do not are named together in one fail. Asserting ALL fixture labels,
+# not just the poll sentinel, is what separates "the app loaded OUR
+# config" from "the app loaded some config".
+assert_labels() {
+  local ci=""
+  [ "$1" = "-i" ] && { ci=-i; shift; }
+  local file="$1" what="$2" p missing=(); shift 2
+  for p in "$@"; do
+    grep -q ${ci:+"$ci"} -- "$p" "$file" || missing+=("$p")
+  done
+  [ "${#missing[@]}" -eq 0 ] || fail "$what: ${missing[*]} (see $file)"
+}
+
+# snap_bonus <artifact-name> — the screenshot as a BONUS: report either
+# outcome, never fail the run over it (see snap).
+snap_bonus() {
+  snap "$1" && say "captured $ART/$1.png" \
+            || say "screenshot unavailable (bonus tier — not a failure)"
 }
 
 # --- 5. reset the lab, then assert the clone is human-zero -----------

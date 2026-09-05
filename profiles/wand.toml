@@ -8,20 +8,19 @@
 # and an aligned block with trailing comments crashes the formatter.
 
 name = "wand"
-repos = ["akira-toriyama/wand"]
 
 # The loop builds a DETACHED worktree of this repo at `branch` (under
 # ~/.tart/capsule-work/wand), so it never checks out a branch in the
 # tree a human or another session has open. Uncommitted work is not
-# verified — commit first. The t-k4hf run switches this to
-# "feat/t-k4hf-tome-context-menu-delete" (currently origin-only).
+# verified — commit first. Point `branch` at a feature branch only
+# while verifying an unmerged wand PR.
 worktree = "/Volumes/workspace/github.com/akira-toriyama/wand"
 branch = "main"
 
 # SwiftPM local-path dependency overrides for unreleased dependencies.
-# Empty for the env-proof; the t-k4hf run needs a patched local sill
-# (t-cp90, unreleased). Point at a clone CAPSULE OWNS, detached at the
-# wanted commit — e.g. ["sill=~/.tart/capsule-deps/sill"] — NEVER at
+# Empty while main pins released tags. When a run needs an unreleased
+# sill, point at a clone CAPSULE OWNS, detached at the wanted commit
+# — e.g. ["sill=~/.tart/capsule-deps/sill"] — NEVER at
 # the live sill checkout: that tree belongs to another session and
 # reintroduces exactly the cross-session coupling capsule exists to
 # remove (tried and rejected — docs/design.md §patched-deps).

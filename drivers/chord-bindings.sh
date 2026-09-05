@@ -21,12 +21,7 @@
 #      fixture, not some other two-binding config.
 
 drive() {
-  launch_app >/dev/null
-  wait_proc "/Contents/MacOS/chord" || {
-    app_log >"$ART/app.log"
-    fail "chord daemon did not start (see $ART/app.log)"
-    return 1
-  }
+  launch_and_wait "/Contents/MacOS/chord" "chord daemon" || return 1
 
   # The daemon exit(1)s without the AX grant, so surviving startup
   # already hints the grant applied — but poll the socket and let the
@@ -60,14 +55,8 @@ drive() {
   local show
   show="$(vm "$GUEST_APP/Contents/MacOS/chord" config --show)"
   printf '%s\n' "$show" >"$ART/config-show.txt"
-  local missing=()
-  for nm in capsule-alpha capsule-beta; do
-    grep -q "$nm" "$ART/config-show.txt" || missing+=("$nm")
-  done
-  if [ "${#missing[@]}" -gt 0 ]; then
-    fail "config --show is missing fixture bindings: ${missing[*]} (see $ART/config-show.txt)"
-    return 1
-  fi
+  assert_labels "$ART/config-show.txt" "config --show is missing fixture bindings" \
+    capsule-alpha capsule-beta || return 1
 
   # Belt and braces: the startup log line records dropped=0, so the
   # count of 2 is "2 parsed cleanly", not "2 survivors of 5".

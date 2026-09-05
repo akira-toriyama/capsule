@@ -20,10 +20,8 @@
 #      channel: the log records the receipt and N hint(s), and must NOT
 #      record a keytap-install failure (the tap is the TCC-gated part).
 
-PERCH="" # set in drive() — $GUEST_APP is not bound at source time
-
 drive() {
-  PERCH="$GUEST_APP/Contents/MacOS/perch"
+  local perch="$GUEST_APP/Contents/MacOS/perch"
 
   # Frontmost target first: the dump and the overlay both read
   # whatever is frontmost, and a bare desktop labels nothing.
@@ -31,12 +29,7 @@ drive() {
   wait_proc "Calculator" || { fail "Calculator never started"; return 1; }
   sleep 2
 
-  launch_app >/dev/null
-  wait_proc "/Contents/MacOS/perch" || {
-    app_log >"$ART/app.log"
-    fail "perch daemon did not start (see $ART/app.log)"
-    return 1
-  }
+  launch_and_wait "/Contents/MacOS/perch" "perch daemon" || return 1
   sleep 3
   app_log >"$ART/app.log"
   grep -q "controller: started" "$ART/app.log" || {
@@ -55,7 +48,7 @@ drive() {
   local n=0
   for _ in $(seq 1 10); do
     sleep 2
-    vm "$PERCH" ax --dump >"$ART/ax-dump.txt" 2>"$ART/ax-dump.err" || continue
+    vm "$perch" ax --dump >"$ART/ax-dump.txt" 2>"$ART/ax-dump.err" || continue
     n="$(sed -n 's/^found \([0-9]*\) labelable.*/\1/p' "$ART/ax-dump.txt")"
     [ -n "$n" ] && [ "$n" -ge 10 ] && break
     n=0
@@ -72,11 +65,11 @@ drive() {
 
   # Overlay-proof BEFORE the config flip: the daemon read the fixture
   # at startup, and the flip below must not race the activation.
-  vm "$PERCH" overlay --activate || {
+  vm "$perch" overlay --activate || {
     fail "overlay --activate refused (no daemon detected?)"
     return 1
   }
-  ok=""
+  local ok=""
   for _ in $(seq 1 8); do
     sleep 2
     app_log >"$ART/app.log"
@@ -94,15 +87,14 @@ drive() {
   hints="$(grep -o '[0-9]* hint(s)' "$ART/app.log" | tail -1)"
   say "overlay-proof — DNC round trip, $hints over Calculator"
 
-  # Pixel tier while the pills are up: a bonus, never the gate.
-  snap perch-hints && say "captured $ART/perch-hints.png" \
-                   || say "screenshot unavailable (bonus tier — not a failure)"
-  vm "$PERCH" overlay --cancel >/dev/null 2>&1 || true
+  # Pixel tier while the pills are up.
+  snap_bonus perch-hints
+  vm "$perch" overlay --cancel >/dev/null 2>&1 || true
 
   # Config-proof: Calculator has no sliders, so a zero-count dump after
   # the flip can only mean perch re-read the edited fixture.
   vmsh 'sed -i "" "s/^roles = \[\"Button\"\]/roles = [\"Slider\"]/" ~/.config/perch/config.toml'
-  vm "$PERCH" ax --dump >"$ART/ax-dump-slider.txt" 2>&1 || {
+  vm "$perch" ax --dump >"$ART/ax-dump-slider.txt" 2>&1 || {
     fail "ax --dump failed after the roles flip (see $ART/ax-dump-slider.txt)"
     return 1
   }

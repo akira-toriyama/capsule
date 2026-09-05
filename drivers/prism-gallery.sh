@@ -17,46 +17,26 @@
 #      text here proves the raw walker closed the gap.
 
 drive() {
-  launch_app >/dev/null
   # Not "/Contents/Resources/…": the shim execs via "MacOS/../Resources",
   # and the un-normalized path IS the process's command line.
-  wait_proc "Resources/bin/prism" || {
-    app_log >"$ART/app.log"
-    fail "prism did not start (see $ART/app.log)"
-    return 1
-  }
+  launch_and_wait "Resources/bin/prism" "prism" || return 1
   app_log >"$ART/app.log"
 
   # First AX answer after launch can lag while the gallery builds its
   # cards, so poll for the config-proof label instead of one sleep.
-  local ok=""
-  for _ in $(seq 1 10); do
-    sleep 2
-    ax_dump prism gallery-ax || continue
-    grep -q '"synthwave"' "$ART/gallery-ax.txt" && { ok=1; break; }
-  done
-  if [ -z "$ok" ]; then
+  ax_wait prism gallery-ax 10 '"synthwave"' || {
     app_log >"$ART/app.log"
     fail "gallery never showed the fixture theme (see $ART/gallery-ax.txt, $ART/app.log)"
     return 1
-  fi
+  }
 
   # All three segment labels, not just one: a partial page would mean
   # the window rendered but the WidgetPage did not.
-  local missing=()
-  for label in Overview Specimens API; do
-    grep -q "\"$label\"" "$ART/gallery-ax.txt" || missing+=("$label")
-  done
-  if [ "${#missing[@]}" -gt 0 ]; then
-    fail "widget page chrome missing: ${missing[*]} (see $ART/gallery-ax.txt)"
-    return 1
-  fi
+  assert_labels "$ART/gallery-ax.txt" "widget page chrome missing" \
+    '"Overview"' '"Specimens"' '"API"' || return 1
   say "gallery open — AX reads theme 'synthwave' + WidgetPage chrome ($(wc -l <"$ART/gallery-ax.txt" | tr -d ' ') elements)"
 
-  # Pixel tier: a bonus. Screen Recording re-confirms ~monthly, so a
-  # missing screenshot must never fail a run that AX already proved.
-  snap prism-gallery && say "captured $ART/prism-gallery.png" \
-                     || say "screenshot unavailable (bonus tier — not a failure)"
+  snap_bonus prism-gallery
 
   vm pkill -f "Resources/bin/prism" >/dev/null 2>&1 || true
   return 0

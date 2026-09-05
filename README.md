@@ -22,11 +22,14 @@ disruption.**
 
 ```
 tart clone <base> <ephemeral>     # APFS copy-on-write — instant, ~0 disk
-tart run  --dir=product:…/.build:ro --dir=app:…/App.app:ro <ephemeral>
+tart run  --no-graphics --dir=capsule:~/.tart/capsule-stage/<x>:ro <ephemeral>
   → drive with capsule-ax-dump (AX) + peekaboo (pixels) + capsule-click (middle-click)
   → screenshot / AX-read the result
 tart delete <ephemeral>           # reclaims only the delta
 ```
+
+The share is one directory — the staged, signed bundle plus its
+fixture — and nothing else from the host.
 
 Always `export TART_NO_AUTO_PRUNE=1` around the loop — a bare
 `tart clone`/`pull` auto-prunes the OCI cache (100 GB LRU default) and
@@ -52,19 +55,35 @@ This is the family north star applied to VMs: a pushed image is a
 
 ## Status
 
-✅ **Both commands work end to end (2026-08-03).**
+✅ **Both commands work end to end (2026-08-03); seven profiles are
+racked.**
 
 ```
 make bake                 # rare:  vanilla -> consented capsule-base, zero touches
 make verify PROFILE=wand  # daily: host build -> clone -> drive -> assert -> destroy
 ```
 
-`make verify PROFILE=wand` builds wand from a detached worktree, signs
-it with the persistent cert, clones the baked base, launches the bundle
-from a read-only share in a `--no-graphics` VM, middle-clicks the tome
-open with `helpers/click`, asserts the fixture rows in the AX tree,
-captures the pixels, and destroys the clone — no consent prompts, no
-host windows, nothing typed by hand.
+`make verify PROFILE=<x>` builds the app from a detached worktree,
+signs it with the persistent cert, clones the baked base, launches the
+bundle from a read-only share in a `--no-graphics` VM, drives it
+(wand: `capsule-click` middle-clicks the tome open), asserts, captures
+the pixels, and destroys the clone — no consent prompts, no host
+windows, nothing typed by hand.
+
+| profile | gate |
+|---|---|
+| `wand` | AX labels: the tome panel lists the fixture rows |
+| `facet` | AX labels: the tree sidebar lists the fixture workspaces |
+| `facet-degrade` | AX geometry: by-workspace degrade tree, header-drag probe |
+| `sill-prism` | AX labels: the gallery shows the fixture theme + WidgetPage chrome |
+| `halo` | AX geometry: the ring hugs Calculator at +48/+48, hot-reload drops it |
+| `perch` | the app's own AX reader, plus a DNC round trip in the log |
+| `chord` | the daemon's query socket (`verify-tier = "daemon"`) |
+
+A profile's `verify-tier` names the gate class: `ax` (the AX dump
+alone), `screenshot` (AX gate plus a bonus pixel artifact — Screen
+Recording re-confirms ~monthly, so pixels never fail a run), or
+`daemon` (no AX surface at all; the app's own control channel gates).
 
 The load-bearing surprise: **the app inherits the ssh-context
 Accessibility grant**, so there is no per-app TCC bake — as long as the
@@ -72,12 +91,8 @@ signed bundle is launched as a child of the SSH session and never via
 `open`. That and every other measured fact (AX answers ~25 s before the
 screen composites; the consent alert covers the row it is trying to
 toggle; System Settings relaunches in every clone) are recorded in
-[docs/design.md](docs/design.md) §Verify loop.
-
-Next up: wand `t-k4hf`'s remaining acceptance items and sill/prism
-`t-cp90` — the first real users. The bring-up task (`projects/t-8ffm`)
-closed once both commands were proven; [docs/design.md](docs/design.md)
-is the live record from here on.
+[docs/design.md](docs/design.md) §Verify loop; the gate classes are
+measured in §The gate taxonomy.
 
 ## Layout
 
