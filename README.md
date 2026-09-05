@@ -55,7 +55,7 @@ This is the family north star applied to VMs: a pushed image is a
 
 ## Status
 
-✅ **Both commands work end to end (2026-08-03); seven profiles are
+✅ **Both commands work end to end (2026-08-03); ten profiles are
 racked.**
 
 ```
@@ -74,6 +74,9 @@ windows, nothing typed by hand.
 |---|---|
 | `wand` | AX labels: the tome panel lists the fixture rows |
 | `facet` | AX labels: the tree sidebar lists the fixture workspaces |
+| `facet-grid` | AX labels: the grid overlay lists the fixture workspaces as `index (label)` cells |
+| `facet-rail` | AX labels: the rail strip lists the fixture workspaces as `index (label)` cells |
+| `facet-isolate` | log + AX: `--view grid` / `--view rail` are refused on an isolate desktop, the tree still renders |
 | `facet-degrade` | AX geometry: by-workspace degrade tree, header-drag probe |
 | `sill-prism` | AX labels: the gallery shows the fixture theme + WidgetPage chrome |
 | `halo` | AX geometry: the ring hugs Calculator at +48/+48, hot-reload drops it |
