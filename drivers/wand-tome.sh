@@ -9,7 +9,9 @@
 #
 # This is the ENV-PROOF: it re-runs the 2026-08-03 bring-up gate through
 # the automated loop — middle-click opens the tome, the AX tree lists the
-# fixture rows.
+# fixture rows — then the wand#128 gate: right-click a row, the themed
+# context menu lists Delete, clicking it drops that row (and only that
+# row) from the live panel.
 
 # The tome anchors on the cursor, and the fixture uses apps = ["*"], so
 # the middle of the deterministic 1024x768 display is a valid anchor.
@@ -48,6 +50,47 @@ drive() {
 
   snap_bonus tome-panel
 
+  # wand#128 — row context menu. Coordinates come from the AX listing
+  # itself (`… value="Alpha" at (x,y) wxh`), never from the fixture: the
+  # panel anchors on the cursor and its rows lay out from the font size,
+  # so a hard-coded offset would silently drift with either.
+  local alpha
+  alpha=$(ax_frame "$ART/tome-ax.txt" '"Alpha"') || { fail "Alpha row has no AX frame (see $ART/tome-ax.txt)"; return 1; }
+  click $(ax_centre "$alpha") right
+  sleep 2
+  ax_dump Wand tome-ax-menu || { fail "capsule-ax-dump Wand failed after right-click (see $ART/tome-ax-menu.err)"; return 1; }
+  assert_labels "$ART/tome-ax-menu.txt" "row context menu did not open (wand#128)" \
+    '"Delete"' || return 1
+  say "row context menu open — AX lists Delete"
+  snap_bonus tome-context-menu
+
+  local delete
+  delete=$(ax_frame "$ART/tome-ax-menu.txt" '"Delete"') || { fail "Delete entry has no AX frame (see $ART/tome-ax-menu.txt)"; return 1; }
+  click $(ax_centre "$delete") left
+  sleep 2
+  ax_dump Wand tome-ax-after || { fail "capsule-ax-dump Wand failed after Delete (see $ART/tome-ax-after.err)"; return 1; }
+  if grep -q '"Alpha"' "$ART/tome-ax-after.txt"; then
+    fail "Alpha is still listed after Delete (see $ART/tome-ax-after.txt)"
+    return 1
+  fi
+  assert_labels "$ART/tome-ax-after.txt" "Delete took rows other than Alpha with it" \
+    '"Beta"' '"Sort"' || return 1
+  say "Delete hid Alpha — AX lists Beta / Sort only"
+  snap_bonus tome-after-delete
+
   vm pkill -f "/Contents/MacOS/wand" >/dev/null 2>&1 || true
   return 0
+}
+
+# ax_frame <ax-listing> <label> -> "x y w h" of the first element whose line
+# carries <label> and a frame; exit 1 when none does.
+ax_frame() {
+  grep -m1 -- "$2" "$1" | sed -nE 's/.* at \(([0-9]+),([0-9]+)\) ([0-9]+)x([0-9]+).*/\1 \2 \3 \4/p' | grep .
+}
+
+# ax_centre "x y w h" -> "cx cy" (integer centre of the frame).
+ax_centre() {
+  local x y w h
+  read -r x y w h <<<"$1"
+  echo "$((x + w / 2)) $((y + h / 2))"
 }
