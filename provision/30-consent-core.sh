@@ -58,7 +58,6 @@ TART_PID=$!
 cleanup() { kill "$TART_PID" 2>/dev/null || true; }
 trap cleanup EXIT
 
-# --- wait for VNC + SSH --------------------------------------------
 VNC_URL=""
 for _ in $(seq 1 30); do
   VNC_URL="$(grep -oE 'vnc://:[^@]+@127\.0\.0\.1:[0-9]+' "$RUNLOG" | head -1 || true)"
@@ -191,7 +190,7 @@ if ! granted "Accessibility"; then
   sshvm 'open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"'
   for attempt in 1 2 3; do
     wait_front || { sleep 3; continue; }
-    click_at $ALERT_OK_X $ALERT_OK_Y   # dismiss the AX alert if it is up
+    click_at $ALERT_OK_X $ALERT_OK_Y
     sleep 2
     wait_row || { sleep 3; continue; }
     click_at 823 168             # row 1 toggle (sshd-keygen-wrapper is the only row)

@@ -1,6 +1,6 @@
-// Minimal CGEvent click poster for the t-k4hf GUI acceptance run.
-// peekaboo has --right but no middle-click, and wand's tome trigger IS
-// middle-click, so the acceptance table can't be driven without this.
+// capsule-click — CGEvent click poster. peekaboo has --right but no
+// middle-click, and wand's tome trigger IS middle-click, so the wand
+// gate cannot be driven without this (upstream ask: helpers/UPSTREAM.md).
 //
 // usage: click <x> <y> [middle|right|left]
 // Coords are CG GLOBAL (origin top-left, Y grows DOWN) — the same space

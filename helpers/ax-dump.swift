@@ -36,9 +36,9 @@ guard CommandLine.arguments.count == 2 else {
 }
 let target = CommandLine.arguments[1]
 
-// Resolve pid: a numeric arg is a pid; anything else matches a running
-// app by localized name or bundle executable name, case-insensitively
-// (same loose contract peekaboo's --app had, so drivers read the same).
+// Name matching keeps peekaboo's loose `--app` contract (localized
+// name, bundle name or executable, case-insensitive) so a driver passes
+// the same argument to either tool.
 let pid: pid_t
 if let n = Int32(target) {
     pid = n

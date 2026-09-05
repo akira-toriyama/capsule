@@ -18,8 +18,8 @@ TOME_Y=384
 
 drive() {
   launch_and_wait "/Contents/MacOS/wand" "wand" || return 1
-  # The daemon installs its event tap during startup; give it a beat and
-  # then read the log rather than guessing from a fixed sleep.
+  # The daemon installs its event tap during startup; the tap verdict is
+  # a log line, so the log is read only after startup has had a beat.
   sleep 3
   app_log >"$ART/app.log"
 

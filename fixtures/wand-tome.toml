@@ -2,17 +2,12 @@
 #
 # A COMPLETE, self-contained wand config: [failsafe] is mandatory (wand
 # refuses to start without it), [tome] is enabled with the "neon" theme,
-# and the items exercise the t-k4hf delete acceptance:
-#   - root-level items (Alpha / Beta)      → delete all → panel DISMISS
-#   - a "Sort" folder with children        → delete all children → PRUNE
-# apps = ["*"] so items show regardless of the frontmost app, keeping the
-# VM gate target-independent and deterministic. Actions are harmless
-# `echo`s — the gate verifies the delete UI, not action side effects.
-#
-# STATUS: VERIFIED — `make verify PROFILE=wand` drives this fixture in a
-# fresh clone and asserts Alpha / Beta / Sort in the AX tree (2026-08-03,
-# reproduced against a base baked from the committed recipe). The delete
-# acceptance the items were designed for (t-k4hf) still needs a driver.
+# and the items give the panel three unmistakable rows to assert — two
+# root-level items (Alpha / Beta) and a "Sort" folder, so the AX read
+# covers a nested row as well as flat ones. apps = ["*"] so items show
+# regardless of the frontmost app, keeping the VM gate
+# target-independent and deterministic. Actions are harmless `echo`s —
+# the gate reads the panel, not action side effects.
 
 [failsafe]
 mouse-hold-timeout-seconds = 30
@@ -36,8 +31,8 @@ apps = ["*"]
 action-type = "shell"
 action-cmd = "echo beta"
 
-# Folder "Sort" with two children (group path = ["Sort"]). Deleting both
-# children must prune the now-empty folder row.
+# Folder "Sort" with two children (group path = ["Sort"]) — the nested
+# row the driver asserts on.
 [[tome.cursor.item]]
 name = "By Name"
 group = ["Sort"]
